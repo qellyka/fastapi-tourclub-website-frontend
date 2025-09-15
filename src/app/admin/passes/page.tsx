@@ -68,10 +68,9 @@ export default function AdminPassesPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      {/* Edit link will be added later */}
-                      {/* <DropdownMenuItem asChild>
+                      <DropdownMenuItem asChild>
                         <Link href={`/admin/passes/edit/${pass.id}`}>Редактировать</Link>
-                      </DropdownMenuItem> */}
+                      </DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-red-500"
                         onClick={() => {

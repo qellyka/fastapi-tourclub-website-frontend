@@ -2,45 +2,47 @@
 
 import { useAuth } from "@/providers/AuthProvider";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-
-const adminNavItems = [
-  { name: "Пользователи", href: "/admin/users" },
-  { name: "Походы", href: "/admin/hikes" },
-  { name: "Статьи", href: "/admin/articles" },
-  { name: "Новости", href: "/admin/news" },
-  { name: "Участники", href: "/admin/participants" },
-  { name: "Связать поход с перевалом", href: "/admin/link" },
-  { name: "Добавить участников к походу", href: "/admin/add-participants" },
-];
+import { AdminSidebar } from "./AdminSidebar";
+import { useEffect } from 'react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
-  if (isLoading) {
-    return <div>Загрузка...</div>;
+  useEffect(() => {
+    // This effect runs only on the client after hydration
+    if (!isLoading && (!user || !user.roles.includes('admin'))) {
+      router.push('/'); // Redirect to home page if not an admin
+    }
+  }, [user, isLoading, router]);
+
+  // On the server, and on the initial client render, show a generic loading state
+  // if we don't have the user information yet.
+  if (isLoading || !user) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-100">
+        <div className="text-xl font-semibold text-gray-700">Загрузка...</div>
+      </div>
+    );
   }
 
-  // NOTE: In a real app, you'd also check for an admin role, e.g., if (!user || !user.isAdmin)
-  if (!user) {
-    router.push("/login");
-    return null;
+  // If the user is an admin, show the admin layout.
+  // If not, this will be briefly rendered before the useEffect redirects.
+  // To prevent even a flash of content, we can add the role check here too.
+  if (!user.roles.includes('admin')) {
+    // This will be the case for non-admin users on the client before redirect.
+    // We can show the same loading screen to prevent any content flash.
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-100">
+        <div className="text-xl font-semibold text-gray-700">Проверка доступа...</div>
+      </div>
+    );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
-      <aside className="md:col-span-1">
-        <h2 className="text-xl font-bold mb-4">Админ-панель</h2>
-        <nav className="flex flex-col space-y-2">
-          {adminNavItems.map((item) => (
-            <Link key={item.name} href={item.href} className="p-2 rounded-md hover:bg-gray-100">
-              {item.name}
-            </Link>
-          ))}
-        </nav>
-      </aside>
-      <main className="md:col-span-4">
+    <div className="flex h-screen bg-gray-100">
+      <AdminSidebar />
+      <main className="flex-1 p-8 overflow-y-auto">
         {children}
       </main>
     </div>

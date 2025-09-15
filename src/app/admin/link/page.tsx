@@ -9,6 +9,7 @@ import api from '@/lib/api';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from '@/hooks/use-toast';
 import { Hike, Pass } from '@/types';
 import { useState } from 'react';
 
@@ -55,7 +56,10 @@ export default function LinkHikePassPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['hikes'] });
       queryClient.invalidateQueries({ queryKey: ['passes'] });
-      alert('Поход успешно связан с перевалом!');
+      toast({
+        title: 'Успех!',
+        description: 'Поход успешно связан с перевалом!',
+      });
       router.push('/admin'); // Redirect to admin dashboard or relevant page
     },
     onError: (err: any) => {

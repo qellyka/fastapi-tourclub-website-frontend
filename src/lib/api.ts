@@ -42,7 +42,7 @@ api.interceptors.response.use(
         const refreshResponse = await api.get('/auth/refresh');
         isRefreshing = false;
         processQueue(null, refreshResponse.data.access_token);
-        return api(originalRequest);
+        return api({ ...originalRequest });
       } catch (refreshError) {
         isRefreshing = false;
         processQueue(refreshError);

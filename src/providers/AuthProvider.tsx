@@ -25,7 +25,7 @@ const AuthContext = createContext<AuthContextType>({
 
 async function fetchUser(): Promise<User | null> {
   try {
-    const { data } = await api.get<any>('/users/me');
+    const { data } = await api.get<{ detail: User }>('/users/me');
     return data.detail;
   } catch (error) {
     return null;

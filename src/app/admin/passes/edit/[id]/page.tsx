@@ -3,7 +3,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useEffect, use } from 'react';
+import { Pass } from '@/types';
 
 const passSchema = z.object({
   name: z.string().min(1, "Название обязательно"),
@@ -26,28 +27,49 @@ const passSchema = z.object({
 
 type PassFormValues = z.infer<typeof passSchema>;
 
-export default function NewPassPage() {
+async function fetchPassById(id: string): Promise<Pass> {
+  const { data } = await api.get(`/archive/passes/${id}`);
+  return data.detail;
+}
+
+export default function EditPassPage({ params }: { params: { id: string } }) {
+  const { id } = use(params);
   const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { register, handleSubmit, formState: { errors } } = useForm<PassFormValues>({
+  const { data: passData, isLoading, isError } = useQuery<Pass>({
+    queryKey: ['pass', id],
+    queryFn: () => fetchPassById(id),
+  });
+
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<PassFormValues>({
     resolver: zodResolver(passSchema),
   });
 
+  useEffect(() => {
+    if (passData) {
+      reset({
+        ...passData,
+        photos: passData.photos ? passData.photos.join('\n') : '',
+      });
+    }
+  }, [passData, reset]);
+
   const mutation = useMutation({
-    mutationFn: (data: any) => api.post('/archive/passes', data),
+    mutationFn: (data: any) => api.patch(`/archive/passes/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-passes'] });
+      queryClient.invalidateQueries({ queryKey: ['pass', id] });
       toast({
         title: 'Успех!',
-        description: 'Перевал успешно добавлен.',
+        description: 'Перевал успешно обновлен.',
       });
       router.push('/admin/passes');
     },
     onError: (err: any) => {
       const errorDetail = err.response?.data?.detail;
-      let errorMessage = "Произошла ошибка при добавлении перевала.";
+      let errorMessage = "Произошла ошибка при обновлении перевала.";
       if (typeof errorDetail === 'string') {
         errorMessage = errorDetail;
       } else if (errorDetail) {
@@ -73,9 +95,12 @@ export default function NewPassPage() {
     mutation.mutate(submissionData);
   };
 
+  if (isLoading) return <div className="container mx-auto px-4 py-24 text-center">Загрузка данных перевала...</div>;
+  if (isError) return <div className="container mx-auto px-4 py-24 text-center">Не удалось загрузить данные перевала.</div>;
+
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Добавить новый перевал</h1>
+      <h1 className="text-2xl font-bold mb-6">Редактировать перевал</h1>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-2">
           <Label htmlFor="name">Название</Label>
@@ -127,7 +152,7 @@ export default function NewPassPage() {
         </div>
 
         <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? 'Добавление...' : 'Добавить перевал'}
+          {mutation.isPending ? 'Сохранение...' : 'Сохранить изменения'}
         </Button>
       </form>
     </div>

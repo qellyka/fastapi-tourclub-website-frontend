@@ -29,11 +29,14 @@ export default function ArticleDetailPage({ params }: { params: { slug: string }
   if (error || !article) return <div>Статья не найдена.</div>;
 
   return (
-    <article>
-      <div className="mb-6 pb-4 border-b">
-        <p className="text-sm text-muted-foreground">Автор: {article.author}</p>
-      </div>
-      {article.content_html && <RichTextRenderer html={article.content_html} />}
-    </article>
+    <div className="container mx-auto px-4 py-12">
+      <article>
+        <div className="mb-6 pb-4 border-b">
+          <h1 className="text-4xl font-bold mb-2">{article.title}</h1>
+          <p className="text-sm text-muted-foreground">Автор: {article.author}</p>
+        </div>
+        {article.content_html && <RichTextRenderer html={article.content_html} />}
+      </article>
+    </div>
   );
 }

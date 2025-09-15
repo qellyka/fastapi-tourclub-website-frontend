@@ -1,23 +1,58 @@
 'use client';
 
-import { useEditor, EditorContent } from '@tiptap/react';
+import { Editor, EditorContent, JSONContent } from '@tiptap/react'; // Corrected import
 import StarterKit from '@tiptap/starter-kit';
+import { useState, useEffect } from 'react';
+import Image from '@tiptap/extension-image';
+import { Iframe } from '@/lib/tiptap-iframe';
+import { TiptapToolbar } from './TiptapToolbar';
 
-const TiptapEditor = ({ value, onChange }: { value: string, onChange: (value: string) => void }) => {
-  const editor = useEditor({
-    extensions: [StarterKit],
-    content: value,
-    editorProps: {
-      attributes: {
-        class: 'prose dark:prose-invert prose-sm sm:prose-base lg:prose-lg xl:prose-2xl m-5 focus:outline-none border rounded-md p-4 min-h-[300px]',
+interface TiptapEditorProps {
+  value: string; // Still takes HTML as initial value
+  onChange: (content: { html: string, json: JSONContent }) => void; // Changed to object
+}
+
+const TiptapEditor = ({ value, onChange }: TiptapEditorProps) => {
+  const [editor, setEditor] = useState<Editor | null>(null);
+
+  // Effect to initialize and destroy the editor
+  useEffect(() => {
+    const tiptapEditor = new Editor({
+      extensions: [StarterKit, Image, Iframe],
+      content: typeof value === 'string' ? value : '',
+      editorProps: {
+        attributes: {
+          class: 'prose dark:prose-invert max-w-none focus:outline-none border rounded-md p-4 min-h-[300px]',
+          'data-gramm': 'false',
+          'data-gramm_editor': 'false',
+        },
       },
-    },
-    onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
-    },
-  });
+      onUpdate: ({ editor }) => {
+        onChange({ html: editor.getHTML(), json: editor.getJSON() }); // Pass both HTML and JSON
+      },
+    });
 
-  return <EditorContent editor={editor} />;
-};
+    setEditor(tiptapEditor);
+
+    return () => {
+      tiptapEditor.destroy();
+    };
+    // We want this to run only once on mount, so we pass an empty dependency array.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Effect to update content from parent
+  useEffect(() => {
+    if (editor && value !== editor.getHTML()) {
+      editor.commands.setContent(value, false);
+    }
+  }, [value, editor]);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <TiptapToolbar editor={editor} />
+      <EditorContent editor={editor} />
+    </div>
+  );};
 
 export default TiptapEditor;

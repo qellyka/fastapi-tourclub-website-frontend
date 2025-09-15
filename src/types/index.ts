@@ -10,6 +10,7 @@ export interface User {
   is_activated: boolean;
   avatar?: string;
   description?: string;
+  roles: string[];
 }
 
 export interface Hike {

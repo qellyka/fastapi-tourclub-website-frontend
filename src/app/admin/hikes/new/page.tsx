@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from '@/components/ui/textarea';
-import { useState } from 'react';
+import { toast } from '@/hooks/use-toast'; // Import toast
 
 const hikeSchema = z.object({
   name: z.string().min(1, "Название обязательно"),
@@ -19,8 +19,10 @@ const hikeSchema = z.object({
   start_date: z.string().min(1, "Дата начала обязательна"),
   end_date: z.string().min(1, "Дата конца обязательна"),
   description: z.string().min(1, "Описание обязательно"),
+  route: z.string().optional(), // New route field
   route_gpx: z.instanceof(FileList).refine(files => files?.length == 1, "GPX файл обязателен."),
   report_pdf: z.instanceof(FileList).refine(files => files?.length == 1, "PDF отчет обязателен."),
+  photos_archive: z.string().url("Неверный формат URL").optional().or(z.literal('')), // Allow empty string as optional
 });
 
 type HikeFormValues = z.infer<typeof hikeSchema>;
@@ -28,7 +30,6 @@ type HikeFormValues = z.infer<typeof hikeSchema>;
 export default function NewHikePage() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [error, setError] = useState<string | null>(null);
 
   const { register, handleSubmit, formState: { errors } } = useForm<HikeFormValues>({
     resolver: zodResolver(hikeSchema),
@@ -40,18 +41,33 @@ export default function NewHikePage() {
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-hikes'] });
+      toast({
+        title: 'Успех!',
+        description: 'Поход успешно добавлен.',
+      });
+      // Optionally, you can still redirect after a short delay if needed, or remove it completely
       router.push('/admin/hikes');
     },
     onError: (err: any) => {
-      setError(err.response?.data?.detail || "Произошла ошибка");
+      const errorDetail = err.response?.data?.detail;
+      let errorMessage = "Произошла ошибка при добавлении похода.";
+      if (typeof errorDetail === 'string') {
+        errorMessage = errorDetail;
+      } else if (errorDetail) {
+        errorMessage = JSON.stringify(errorDetail);
+      }
+      toast({
+        title: 'Ошибка!',
+        description: errorMessage,
+        variant: 'destructive',
+      });
     },
   });
 
   const onSubmit = (data: HikeFormValues) => {
-    setError(null);
     const formData = new FormData();
     
-    const jsonData = {
+    const jsonData: any = {
         name: data.name,
         complexity: data.complexity,
         region: data.region,
@@ -60,9 +76,17 @@ export default function NewHikePage() {
         description: data.description,
     };
 
-    formData.append('hike_data', new Blob([JSON.stringify(jsonData)], { type: 'application/json' }));
-    formData.append('route_gpx', data.route_gpx[0]);
-    formData.append('report_pdf', data.report_pdf[0]);
+    if (data.route && data.route.trim() !== '') {
+      jsonData.route = data.route;
+    }
+
+    if (data.photos_archive && data.photos_archive.trim() !== '') {
+      jsonData.photos_archive = data.photos_archive;
+    }
+
+    formData.append('hike', JSON.stringify(jsonData));
+    formData.append('gpx_file', data.route_gpx[0]);
+    formData.append('report_file', data.report_pdf[0]);
     
     mutation.mutate(formData);
   };
@@ -87,7 +111,7 @@ export default function NewHikePage() {
         <div className="space-y-2">
           <Label htmlFor="region">Регион</Label>
           <Input id="region" {...register('region')} />
-          {errors.region && <p className="text-sm text-red-500">{errors.region.message}</p>}
+            {errors.region && <p className="text-sm text-red-500">{errors.region.message}</p>}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -110,6 +134,12 @@ export default function NewHikePage() {
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="route">Маршрут</Label>
+          <Textarea id="route" {...register('route')} />
+          {errors.route && <p className="text-sm text-red-500">{errors.route.message}</p>}
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="route_gpx">GPX файл маршрута</Label>
           <Input id="route_gpx" type="file" accept=".gpx" {...register('route_gpx')} />
           {errors.route_gpx && <p className="text-sm text-red-500">{errors.route_gpx.message as string}</p>}
@@ -121,7 +151,11 @@ export default function NewHikePage() {
           {errors.report_pdf && <p className="text-sm text-red-500">{errors.report_pdf.message as string}</p>}
         </div>
 
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        <div className="space-y-2">
+          <Label htmlFor="photos_archive">Ссылка на фотоархив (необязательно)</Label>
+          <Input id="photos_archive" type="url" {...register('photos_archive')} />
+          {errors.photos_archive && <p className="text-sm text-red-500">{errors.photos_archive.message}</p>}
+        </div>
 
         <Button type="submit" disabled={mutation.isPending}>
           {mutation.isPending ? 'Добавление...' : 'Добавить поход'}

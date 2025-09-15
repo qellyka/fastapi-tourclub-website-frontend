@@ -3,8 +3,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-import ArticleForm from '../ArticleForm';
+import InitialArticleForm from '../InitialArticleForm';
 import { useState } from 'react';
+import { Article } from '@/types';
 
 export default function NewArticlePage() {
   const router = useRouter();
@@ -12,25 +13,32 @@ export default function NewArticlePage() {
   const [error, setError] = useState<string | null>(null);
 
   const mutation = useMutation({
-    mutationFn: (formData: FormData) => api.post('/articles', formData, {
+    mutationFn: (formData: FormData) => api.post<Article>('/articles', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['admin-articles'] });
-      router.push('/admin/articles');
+      // The server returns the created article with its ID nested under 'detail'
+      router.push(`/admin/articles/edit/${data.data.detail.id}`);
     },
     onError: (err: any) => {
-      setError(err.response?.data?.detail || "Произошла ошибка");
+      const errorDetail = err.response?.data?.detail;
+      if (typeof errorDetail === 'string') {
+        setError(errorDetail);
+      } else if (errorDetail) {
+        setError(JSON.stringify(errorDetail));
+      } else {
+        setError("Произошла неизвестная ошибка");
+      }
     },
   });
 
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Создать новую статью</h1>
-      <ArticleForm 
+      <InitialArticleForm 
         onSubmit={mutation.mutate}
         isPending={mutation.isPending}
-        submitButtonText="Создать"
       />
       {error && <p className="text-sm text-red-500 mt-4">{error}</p>}
     </div>

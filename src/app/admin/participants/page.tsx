@@ -64,8 +64,8 @@ export default function AdminParticipantsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {participants?.map((participant) => (
-              <TableRow key={participant.id} className="hover:bg-gray-50 transition-colors duration-150">
+            {participants?.map((participant, index) => (
+              <TableRow key={participant.id || index} className="hover:bg-gray-50 transition-colors duration-150">
                 <TableCell>{participant.id}</TableCell>
                 <TableCell>{participant.full_name}</TableCell>
                 <TableCell>{participant.username}</TableCell>
@@ -85,10 +85,11 @@ export default function AdminParticipantsPage() {
                       <DropdownMenuItem
                         className="text-red-500"
                         onClick={() => {
-                          if (confirm('Вы уверены, что хотите удалить этого участника?')) {
+                          if (participant.id && confirm('Вы уверены, что хотите удалить этого участника?')) {
                             deleteMutation.mutate(participant.id);
                           }
                         }}
+                        disabled={!participant.id}
                       >
                         Удалить
                       </DropdownMenuItem>

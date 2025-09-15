@@ -2,7 +2,8 @@
 
 import { Map, Source, Layer, NavigationControl, MapRef } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
+import type { LngLatBoundsLike } from 'mapbox-gl';
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
@@ -59,62 +60,108 @@ const pointLabelLayer: import('react-map-gl').SymbolLayer = {
   }
 };
 
-// Helper to find the first coordinate
-function getInitialCoords(geojson: any): { longitude: number; latitude: number } | null {
-  if (!geojson) return null;
+// Helper to calculate the bounding box of a GeoJSON object
+function getBounds(geojson: any): LngLatBoundsLike | null {
+  let bounds: [number, number, number, number] | null = null;
+
+  function updateBounds(coords: number[]) {
+    const [lng, lat] = coords;
+    if (!bounds) {
+      bounds = [lng, lat, lng, lat];
+    } else {
+      bounds[0] = Math.min(bounds[0], lng);
+      bounds[1] = Math.min(bounds[1], lat);
+      bounds[2] = Math.max(bounds[2], lng);
+      bounds[3] = Math.max(bounds[3], lat);
+    }
+  }
+
+  function processCoordinates(coords: any) {
+    if (!coords || !Array.isArray(coords)) return;
+
+    if (typeof coords[0] === 'number' && typeof coords[1] === 'number') {
+        updateBounds(coords);
+        return;
+    }
+
+    for (const item of coords) {
+        processCoordinates(item);
+    }
+  }
+
   try {
+    if (!geojson) return null;
     if (geojson.type === 'FeatureCollection') {
-      const firstFeature = geojson.features[0];
-      if (firstFeature.geometry.type === 'LineString') {
-        const [longitude, latitude] = firstFeature.geometry.coordinates[0];
-        return { longitude, latitude };
+      for (const feature of geojson.features) {
+        if (feature.geometry && feature.geometry.coordinates) {
+          processCoordinates(feature.geometry.coordinates);
+        }
       }
-    } else if (geojson.type === 'Feature' && geojson.geometry.type === 'LineString') {
-      const [longitude, latitude] = geojson.geometry.coordinates[0];
-      return { longitude, latitude };
-    } else if (geojson.type === 'LineString') {
-      const [longitude, latitude] = geojson.coordinates[0];
-      return { longitude, latitude };
+    } else if (geojson.type === 'Feature') {
+      if (geojson.geometry && geojson.geometry.coordinates) {
+        processCoordinates(geojson.geometry.coordinates);
+      }
+    } else if (geojson.coordinates) { // This could be a Geometry object
+      processCoordinates(geojson.coordinates);
     }
   } catch (e) {
-    console.error("Could not parse GeoJSON for initial coordinates", e);
+    console.error("Could not parse GeoJSON for bounds", e);
     return null;
   }
-  return null;
+
+  return bounds ? [[bounds[0], bounds[1]], [bounds[2], bounds[3]]] : null;
 }
 
 export default function MapboxMap({ geojson }: MapboxMapProps) {
   const mapRef = useRef<MapRef>(null);
-
-  if (!MAPBOX_TOKEN) {
-    return (
-      <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-        <p className="text-red-500">Mapbox token is not configured.</p>
-      </div>
-    );
-  }
-
-  const initialCoords = getInitialCoords(geojson);
+  const [isMapLoaded, setMapLoaded] = useState(false);
 
   const onMapLoad = () => {
     if (mapRef.current) {
-      mapRef.current.setLanguage('ru'); // Set map labels to Russian
+      mapRef.current.setLanguage('ru');
+      setMapLoaded(true);
     }
   };
+
+  useEffect(() => {
+    if (isMapLoaded && mapRef.current && geojson) {
+      const bounds = getBounds(geojson);
+      if (bounds) {
+        const isPoint = bounds[0][0] === bounds[1][0] && bounds[0][1] === bounds[1][1];
+        if (isPoint) {
+          mapRef.current.flyTo({ center: [bounds[0][0], bounds[0][1]], zoom: 12 });
+        } else {
+          mapRef.current.fitBounds(bounds, { padding: 40, duration: 1000 });
+        }
+      } else {
+        mapRef.current.flyTo({ center: [37.6173, 55.7558], zoom: 5 });
+      }
+    } else if (isMapLoaded && mapRef.current) {
+        mapRef.current.flyTo({ center: [37.6173, 55.7558], zoom: 5 });
+    }
+  }, [geojson, isMapLoaded]);
 
   return (
     <Map
       ref={mapRef}
       initialViewState={{
-        longitude: initialCoords?.longitude || 37.6173,
-        latitude: initialCoords?.latitude || 55.7558,
-        zoom: initialCoords ? 10 : 5
+        longitude: 37.6173,
+        latitude: 55.7558,
+        zoom: 5
       }}
       style={{ width: '100%', height: '100%' }}
       mapStyle="mapbox://styles/mapbox/outdoors-v12"
       mapboxAccessToken={MAPBOX_TOKEN}
       onLoad={onMapLoad}
+      terrain={{ source: 'mapbox-dem', exaggeration: 1.5 }}
     >
+      <Source
+        id="mapbox-dem"
+        type="raster-dem"
+        url="mapbox://mapbox.mapbox-terrain-dem-v1"
+        tileSize={512}
+        maxzoom={14}
+      />
       <Source id="route" type="geojson" data={geojson}>
         <Layer {...routeLayer} />
         <Layer {...pointLayer} />

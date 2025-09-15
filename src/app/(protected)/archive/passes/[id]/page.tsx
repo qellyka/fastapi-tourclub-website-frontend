@@ -4,8 +4,21 @@ import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { Pass, Hike } from '@/types';
 import Link from 'next/link';
-import { use } from 'react';
+import { use, useState } from 'react';
 import MapboxMap from '@/components/MapboxMap'; // Import Map component
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 async function fetchPassById(id: string): Promise<Pass> {
   const { data } = await api.get(`/archive/passes/${id}`);
@@ -19,6 +32,7 @@ async function fetchHikesForPass(id: string): Promise<Hike[]> {
 
 export default function PassDetailPage({ params }: { params: { id: string } }) {
   const { id } = use(params);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const { data: pass, isLoading: isLoadingPass, error: errorPass } = useQuery<any>({ 
     queryKey: ['pass', id], 
@@ -37,7 +51,7 @@ export default function PassDetailPage({ params }: { params: { id: string } }) {
     type: 'FeatureCollection',
     features: [{
       type: 'Feature',
-      properties: {},
+      properties: { name: pass.name },
       geometry: {
         type: 'Point',
         coordinates: [pass.longitude, pass.latitude]
@@ -81,6 +95,36 @@ export default function PassDetailPage({ params }: { params: { id: string } }) {
             <h2 className="text-3xl font-bold mb-4">Описание</h2>
             <p className="text-lg whitespace-pre-wrap leading-relaxed">{pass.description}</p>
           </div>
+        )}
+
+        {pass.photos && pass.photos.length > 0 && (
+          <div className="bg-white p-8 rounded-lg border">
+            <h2 className="text-3xl font-bold mb-4">Фотографии</h2>
+            <Carousel opts={{ align: "start", loop: true }}>
+              <CarouselContent>
+                {pass.photos.map((photo, index) => (
+                  <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/4">
+                    <div className="p-1">
+                      <button onClick={() => setSelectedImage(photo)} className="w-full h-full">
+                        <img src={photo} alt={`Фото перевала ${index + 1}`} className="w-full h-64 object-cover rounded-lg cursor-pointer" />
+                      </button>
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          </div>
+        )}
+
+        {selectedImage && (
+          <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+            <DialogContent className="max-w-4xl h-auto">
+              <DialogTitle className="sr-only">Просмотр фотографии перевала</DialogTitle>
+              <img src={selectedImage} alt="Фото перевала" className="w-full h-full object-contain" />
+            </DialogContent>
+          </Dialog>
         )}
 
         <div className="bg-white p-8 rounded-lg border">

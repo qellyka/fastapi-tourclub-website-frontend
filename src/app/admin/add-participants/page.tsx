@@ -9,6 +9,7 @@ import api from '@/lib/api';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from '@/hooks/use-toast';
 import { Hike, User } from '@/types';
 import { useState } from 'react';
 
@@ -58,7 +59,10 @@ export default function AddParticipantsToHikePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['hikes'] });
       queryClient.invalidateQueries({ queryKey: ['hike-participants'] });
-      alert('Участники успешно добавлены к походу!');
+      toast({
+        title: 'Успех!',
+        description: 'Участники успешно добавлены к походу!',
+      });
       router.push('/admin'); // Redirect to admin dashboard or relevant page
     },
     onError: (err: any) => {
