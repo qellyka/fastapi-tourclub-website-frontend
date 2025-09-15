@@ -62,7 +62,7 @@ export default function HikesPage() {
   if (error) return <div className="container mx-auto px-4 py-24 text-center">Ошибка при загрузке походов.</div>;
 
   return (
-    <div className="container mx-auto px-4 py-24">
+    <div className="container mx-auto px-4 py-24 flex-grow flex flex-col">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Архив походов</h1>
         <div className="flex gap-4">

@@ -33,7 +33,7 @@ export default function RootLayout({
           <ModalProvider>
             <AuthProvider>
               <Header />
-              <main className="flex-grow">
+              <main className="flex-grow flex flex-col">
                 <Suspense fallback={<div>Загрузка...</div>}>
                   {children}
                 </Suspense>

@@ -28,7 +28,7 @@ export default function NewsDetailPage({ params }: { params: { slug: string } })
   if (error || !newsItem) return <div>Новость не найдена.</div>;
 
   return (
-    <div className="max-w-4xl mx-auto py-24 px-4">
+    <div className="max-w-4xl mx-auto py-24 px-4 flex-grow flex flex-col">
       <article>
         {newsItem.content_html && <RichTextRenderer html={newsItem.content_html} />}
       </article>

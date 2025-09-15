@@ -278,7 +278,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-24">
+    <div className="container mx-auto px-4 py-24 flex-grow flex flex-col">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Профиль пользователя</h1>
         <Button variant="destructive" onClick={handleLogout}>Выйти</Button>
