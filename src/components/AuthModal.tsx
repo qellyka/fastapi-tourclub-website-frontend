@@ -8,11 +8,12 @@ import api from '@/lib/api';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from 'react';
+import { useState, useRef, useLayoutEffect } from 'react';
 import { useModal } from '@/providers/ModalProvider';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 // --- Login Form --- //
 const loginSchema = z.object({
@@ -66,7 +67,7 @@ function LoginForm() {
         <Input id="login-password" type="password" {...register('password')} />
         {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
       </div>
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-red-500 text-center">{error}</p>}
       <Button type="submit" className="w-full" disabled={mutation.isPending}>
         {mutation.isPending ? 'Вход...' : 'Войти'}
       </Button>
@@ -81,7 +82,6 @@ const registerSchema = z.object({
   password: z.string().min(6, "Минимум 6 символов"),
   first_name: z.string().min(1, "Имя обязательно"),
   last_name: z.string().min(1, "Фамилия обязательна"),
-  middle_name: z.string().optional(),
 });
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
@@ -110,7 +110,7 @@ function RegisterForm() {
 
   if (success) {
     return (
-      <div className="text-center">
+      <div className="text-center h-full flex flex-col justify-center">
         <h3 className="text-lg font-semibold">Регистрация успешна!</h3>
         <p className="text-sm text-muted-foreground mt-2">На вашу почту отправлено письмо для подтверждения аккаунта.</p>
       </div>
@@ -146,7 +146,7 @@ function RegisterForm() {
         <Input id="password" type="password" {...register('password')} />
         {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
       </div>
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-red-500 text-center">{error}</p>}
       <Button type="submit" className="w-full" disabled={mutation.isPending}>
         {mutation.isPending ? 'Регистрация...' : 'Создать аккаунт'}
       </Button>
@@ -157,30 +157,58 @@ function RegisterForm() {
 // --- Main Auth Modal --- //
 export function AuthModal() {
   const { isAuthModalOpen, hideAuthModal } = useModal();
+  const [activeView, setActiveView] = useState('login');
+  const [contentHeight, setContentHeight] = useState<number | 'auto'>('auto');
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (contentRef.current) {
+      setContentHeight(contentRef.current.scrollHeight);
+    }
+  }, [activeView]);
 
   return (
-    <Dialog open={isAuthModalOpen} onOpenChange={hideAuthModal}>
-      <DialogContent className="sm:max-w-[425px]">
-        <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Вход</TabsTrigger>
-            <TabsTrigger value="register">Регистрация</TabsTrigger>
-          </TabsList>
-          <TabsContent value="login" className="fade-in">
-            <DialogHeader className="mb-4">
-              <DialogTitle>Вход</DialogTitle>
-              <DialogDescription>Войдите в свой аккаунт, чтобы продолжить</DialogDescription>
-            </DialogHeader>
-            <LoginForm />
-          </TabsContent>
-          <TabsContent value="register" className="fade-in">
-            <DialogHeader className="mb-4">
-              <DialogTitle>Регистрация</DialogTitle>
-              <DialogDescription>Создайте аккаунт, чтобы стать частью клуба</DialogDescription>
-            </DialogHeader>
-            <RegisterForm />
-          </TabsContent>
-        </Tabs>
+    <Dialog open={isAuthModalOpen} onOpenChange={(open) => !open && hideAuthModal()}>
+      <DialogContent className="sm:max-w-md p-6">
+        <DialogHeader className="text-center">
+          <DialogTitle className="text-2xl">
+            {activeView === 'login' ? 'Вход в аккаунт' : 'Создание аккаунта'}
+          </DialogTitle>
+          <DialogDescription>
+            {activeView === 'login' 
+              ? 'Войдите, чтобы получить доступ ко всем возможностям' 
+              : 'Присоединяйтесь к нашему сообществу путешественников'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground w-full my-4">
+            <button 
+                onClick={() => setActiveView('login')} 
+                className={cn("w-1/2 inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2", activeView === 'login' && 'bg-background text-foreground shadow-sm')}
+            >
+                Вход
+            </button>
+            <button 
+                onClick={() => setActiveView('register')} 
+                className={cn("w-1/2 inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2", activeView === 'register' && 'bg-background text-foreground shadow-sm')}
+            >
+                Регистрация
+            </button>
+        </div>
+
+        <div 
+          style={{ height: contentHeight, transition: 'height 0.3s ease-in-out' }} 
+          className="overflow-hidden"
+        >
+          <div ref={contentRef}>
+            {activeView === 'login' ? <LoginForm /> : <RegisterForm />}
+          </div>
+        </div>
+
+        <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </DialogClose>
       </DialogContent>
     </Dialog>
   );
