@@ -28,6 +28,8 @@ async function fetchUser(): Promise<User | null> {
     const { data } = await api.get<{ detail: User }>('/users/me');
     return data.detail;
   } catch (error) {
+    // Эта ошибка ожидаема, если пользователь не вошел в систему. 
+    // Мы ее перехватываем, чтобы react-query не пытался повторить запрос.
     return null;
   }
 }
@@ -44,6 +46,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     queryFn: fetchUser,
     enabled: typeof window !== 'undefined' && !['/login', '/register'].includes(pathname),
     refetchOnWindowFocus: false,
+    // Явно отключаем повторные попытки, чтобы избежать циклов
+    retry: false, 
   });
 
   const logout = useCallback(async () => {
