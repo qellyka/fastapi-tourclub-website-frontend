@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
@@ -7,27 +8,44 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { formatDateRange } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
-async function fetchHikes(): Promise<any> {
+async function fetchHikes(): Promise<{ detail: Hike[] }> {
   const { data } = await api.get('/archive/hikes');
   return data;
 }
 
 function HikeCard({ hike }: { hike: Hike }) {
   return (
-    <Link href={`/archive/hikes/${hike.id}`} className="block group bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 flex flex-col h-full">
-      <div className="p-4 flex-grow">
-        <h3 className="text-lg font-bold text-gray-800 group-hover:text-primary transition-colors duration-300 mb-2">{hike.name}</h3>
-        <p className="text-sm text-gray-600 line-clamp-2"><strong>Нитка:</strong> {hike.route}</p>
-      </div>
-      <div className="p-4 border-t border-gray-100 bg-gray-50 text-sm text-gray-700">
-        <p><strong>Регион:</strong> {hike.region}</p>
-        <p><strong>Сложность:</strong> {hike.complexity}</p>
-        <p><strong>Даты:</strong> {formatDateRange(hike.start_date, hike.end_date)}</p>
-      </div>
+    <Link href={`/archive/hikes/${hike.slug}`} className="block group h-full">
+      <Card className="h-full flex flex-col bg-card border-border/50 transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10">
+        <CardHeader>
+          <CardTitle className="group-hover:text-primary transition-colors duration-300">{hike.name}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex-grow">
+          <p className="text-sm text-muted-foreground line-clamp-2"><strong>Нитка:</strong> {hike.route}</p>
+        </CardContent>
+        <CardFooter className="flex-col items-start text-sm text-muted-foreground bg-secondary/50 p-4">
+          <p><strong>Регион:</strong> {hike.region}</p>
+          <p><strong>Сложность:</strong> {hike.complexity}</p>
+          <p><strong>Даты:</strong> {formatDateRange(hike.start_date, hike.end_date)}</p>
+        </CardFooter>
+      </Card>
     </Link>
   );
 }
+
+const HikesSkeleton = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-48 w-full" />
+    </div>
+)
 
 export default function HikesPage() {
   const [regionFilter, setRegionFilter] = useState('all');
@@ -58,16 +76,13 @@ export default function HikesPage() {
     });
   }, [hikes, regionFilter, complexityFilter]);
 
-  if (isLoading) return <div className="container mx-auto px-4 py-24 text-center">Загрузка походов...</div>;
-  if (error) return <div className="container mx-auto px-4 py-24 text-center">Ошибка при загрузке походов.</div>;
-
   return (
-    <div className="container mx-auto px-4 py-24">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Архив походов</h1>
-        <div className="flex gap-4">
+    <div className="container mx-auto px-4 py-24 pt-28 md:pt-32">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <h1 className="text-4xl font-bold tracking-tighter">Архив походов</h1>
+        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
           <Select value={regionFilter} onValueChange={setRegionFilter}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full md:w-[180px]">
               <SelectValue placeholder="Регион" />
             </SelectTrigger>
             <SelectContent>
@@ -77,7 +92,7 @@ export default function HikesPage() {
             </SelectContent>
           </Select>
           <Select value={complexityFilter} onValueChange={setComplexityFilter}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full md:w-[180px]">
               <SelectValue placeholder="Сложность" />
             </SelectTrigger>
             <SelectContent>
@@ -88,17 +103,21 @@ export default function HikesPage() {
           </Select>
         </div>
       </div>
-      {filteredHikes && filteredHikes.length > 0 ? (
+      {isLoading && <HikesSkeleton />}
+      {error && <div className="text-center py-16 text-destructive bg-destructive/10 p-4 rounded-lg">Ошибка при загрузке походов.</div>}
+      {!isLoading && !error && filteredHikes && filteredHikes.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredHikes.map((hike) => (
             <HikeCard key={hike.id} hike={hike} />
           ))}
         </div>
       ) : (
-        <div className="text-center py-16 border-2 border-dashed rounded-lg mt-6">
-          <p className="text-lg font-medium text-gray-500">Походы не найдены</p>
-          <p className="text-sm text-gray-400 mt-1">Попробуйте изменить фильтры или загляните позже.</p>
-        </div>
+        !isLoading && !error && (
+            <div className="text-center py-16 border-2 border-dashed rounded-lg mt-6 border-muted-foreground/30">
+                <p className="text-lg font-medium text-muted-foreground">Походы не найдены</p>
+                <p className="text-sm text-muted-foreground/70 mt-1">Попробуйте изменить фильтры или загляните позже.</p>
+            </div>
+        )
       )}
     </div>
   );

@@ -12,7 +12,7 @@ async function fetchPasses(): Promise<Pass[]> {
 
 function PassCard({ pass }: { pass: Pass }) {
   return (
-    <Link href={`/archive/passes/${pass.id}`} className="block group border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
+    <Link href={`/archive/passes/${pass.slug}`} className="block group border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
       <div className="p-4">
         <h3 className="text-lg font-bold group-hover:text-primary transition-colors duration-300">{pass.name}</h3>
         <p className="text-sm text-muted-foreground mt-2"><strong>Регион:</strong> {pass.region}</p>
@@ -38,7 +38,7 @@ export default function PassesPage() {
       <h1 className="text-3xl font-bold mb-6">Каталог перевалов</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {passes?.map((pass) => (
-          <PassCard key={pass.id} pass={pass} />
+          <PassCard key={pass.slug} pass={pass} />
         ))}
       </div>
     </main>
