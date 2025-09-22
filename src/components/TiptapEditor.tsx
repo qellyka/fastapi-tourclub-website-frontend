@@ -10,9 +10,10 @@ import { TiptapToolbar } from './TiptapToolbar';
 interface TiptapEditorProps {
   value: string; // Still takes HTML as initial value
   onChange: (content: { html: string, json: JSONContent }) => void; // Changed to object
+  bucketName: 'tkirbis-news-media' | 'tkirbis-article-media';
 }
 
-const TiptapEditor = ({ value, onChange }: TiptapEditorProps) => {
+const TiptapEditor = ({ value, onChange, bucketName }: TiptapEditorProps) => {
   const [editor, setEditor] = useState<Editor | null>(null);
 
   // Effect to initialize and destroy the editor
@@ -50,7 +51,7 @@ const TiptapEditor = ({ value, onChange }: TiptapEditorProps) => {
 
   return (
     <div className="flex flex-col gap-2">
-      <TiptapToolbar editor={editor} />
+      <TiptapToolbar editor={editor} bucketName={bucketName} />
       <EditorContent editor={editor} />
     </div>
   );};

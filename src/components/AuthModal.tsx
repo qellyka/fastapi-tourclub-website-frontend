@@ -26,7 +26,6 @@ function LoginForm() {
   const queryClient = useQueryClient();
   const { hideAuthModal } = useModal();
   const { toast } = useToast();
-  const [error, setError] = useState<string | null>(null);
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -37,21 +36,16 @@ function LoginForm() {
     onSuccess: (response) => {
       const user = response.data.detail.user;
       queryClient.setQueryData(['user'], user);
-      toast({ title: "Вход выполнен", description: `Добро пожаловать, ${user.username}!` });
+      toast({ variant: 'success', title: "Вход выполнен", description: `Добро пожаловать, ${user.username}!` });
       hideAuthModal();
     },
     onError: (err: any) => {
-      const errorMessage = err.response?.data?.detail;
-      if (errorMessage === "user unauthorized") {
-        setError("Неверный логин или пароль");
-      } else {
-        setError(errorMessage || "Произошла ошибка при входе");
-      }
+      const errorMessage = err.response?.data?.detail || "Произошла непредвиденная ошибка";
+      toast({ variant: 'destructive', title: 'Ошибка входа', description: errorMessage });
     },
   });
 
   const onSubmit = (data: LoginFormValues) => {
-    setError(null);
     mutation.mutate(data);
   };
 
@@ -67,7 +61,6 @@ function LoginForm() {
         <Input id="login-password" type="password" {...register('password')} />
         {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
       </div>
-      {error && <p className="text-sm text-red-500 text-center">{error}</p>}
       <Button type="submit" className="w-full" disabled={mutation.isPending}>
         {mutation.isPending ? 'Вход...' : 'Войти'}
       </Button>
@@ -86,7 +79,7 @@ const registerSchema = z.object({
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 function RegisterForm() {
-  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
   const [success, setSuccess] = useState<boolean>(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<RegisterFormValues>({
@@ -99,12 +92,12 @@ function RegisterForm() {
       setSuccess(true);
     },
     onError: (err: any) => {
-      setError(err.response?.data?.detail || "Произошла ошибка при регистрации");
+      const errorMessage = err.response?.data?.detail || "Произошла непредвиденная ошибка";
+      toast({ variant: 'destructive', title: 'Ошибка регистрации', description: errorMessage });
     },
   });
 
   const onSubmit = (data: RegisterFormValues) => {
-    setError(null);
     mutation.mutate(data);
   };
 
@@ -146,7 +139,6 @@ function RegisterForm() {
         <Input id="password" type="password" {...register('password')} />
         {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
       </div>
-      {error && <p className="text-sm text-red-500 text-center">{error}</p>}
       <Button type="submit" className="w-full" disabled={mutation.isPending}>
         {mutation.isPending ? 'Регистрация...' : 'Создать аккаунт'}
       </Button>
@@ -169,38 +161,40 @@ export function AuthModal() {
 
   return (
     <Dialog open={isAuthModalOpen} onOpenChange={(open) => !open && hideAuthModal()}>
-      <DialogContent className="sm:max-w-md p-6">
-        <DialogHeader className="text-center">
-          <DialogTitle className="text-2xl">
-            {activeView === 'login' ? 'Вход в аккаунт' : 'Создание аккаунта'}
-          </DialogTitle>
-          <DialogDescription>
-            {activeView === 'login' 
-              ? 'Войдите, чтобы получить доступ ко всем возможностям' 
-              : 'Присоединяйтесь к нашему сообществу путешественников'}
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-md p-0">
+        <div className="p-6">
+          <DialogHeader className="text-center">
+            <DialogTitle className="text-2xl">
+              {activeView === 'login' ? 'Вход в аккаунт' : 'Создание аккаунта'}
+            </DialogTitle>
+            <DialogDescription>
+              {activeView === 'login' 
+                ? 'Войдите, чтобы получить доступ ко всем возможностям' 
+                : 'Присоединяйтесь к нашему сообществу путешественников'}
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground w-full my-4">
-            <button 
-                onClick={() => setActiveView('login')} 
-                className={cn("w-1/2 inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2", activeView === 'login' && 'bg-background text-foreground shadow-sm')}
-            >
-                Вход
-            </button>
-            <button 
-                onClick={() => setActiveView('register')} 
-                className={cn("w-1/2 inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2", activeView === 'register' && 'bg-background text-foreground shadow-sm')}
-            >
-                Регистрация
-            </button>
+          <div className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground w-full my-4">
+              <button 
+                  onClick={() => setActiveView('login')} 
+                  className={cn("w-1/2 inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2", activeView === 'login' && 'bg-background text-foreground shadow-sm')}
+              >
+                  Вход
+              </button>
+              <button 
+                  onClick={() => setActiveView('register')} 
+                  className={cn("w-1/2 inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2", activeView === 'register' && 'bg-background text-foreground shadow-sm')}
+              >
+                  Регистрация
+              </button>
+          </div>
         </div>
 
         <div 
           style={{ height: contentHeight, transition: 'height 0.3s ease-in-out' }} 
           className="overflow-hidden"
         >
-          <div ref={contentRef}>
+          <div ref={contentRef} className="px-6 pb-6">
             {activeView === 'login' ? <LoginForm /> : <RegisterForm />}
           </div>
         </div>

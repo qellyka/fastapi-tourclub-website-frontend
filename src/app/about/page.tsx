@@ -3,41 +3,57 @@
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { User } from '@/types';
+import Image from 'next/image';
+import { Skeleton } from '@/components/ui/skeleton';
+import TiltedCard from '@/components/TiltedCard';
 
-async function fetchParticipants(): Promise<any> {
+async function fetchParticipants(): Promise<{ detail: User[] }> {
   const { data } = await api.get('/club/participants');
   return data;
 }
 
 function ParticipantCard({ participant }: { participant: User }) {
-  return (
-    <div className="group relative overflow-hidden rounded-lg bg-white shadow-md transition-all duration-500 ease-in-out hover:shadow-xl">
-      {participant.avatar ? (
-        <img 
-          src={participant.avatar} 
-          alt={participant.full_name} 
-          className="w-full h-96 object-cover transition-transform duration-500 ease-in-out group-hover:scale-110" 
-        />
-      ) : (
-        <div className="w-full h-96 bg-gray-200 flex items-center justify-center">
-          <span className="text-5xl font-bold text-gray-400">{participant.full_name ? participant.full_name.charAt(0) : '?'}</span>
-        </div>
-      )}
-      
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+  // Prioritize avatar_club, fall back to avatar.
+  let imageUrl = participant.avatar_club || participant.avatar;
 
-      {/* Text content */}
-      <div className="absolute bottom-0 left-0 p-6 w-full">
-        <div className="transform transition-all duration-500 ease-in-out">
-          <h3 className="text-2xl font-bold text-white">{participant.full_name}</h3>
-          {participant.description && <p className="text-sm text-white/90 mt-1">{participant.description}</p>}
-        </div>
+  // If an image URL exists and it's a relative path, make it absolute.
+  if (imageUrl && imageUrl.startsWith('/')) {
+    imageUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}${imageUrl}`;
+  }
+
+  // The content to be displayed over the image
+  const overlayContent = (
+    <div className="w-full h-full bg-gradient-to-t from-black/70 via-black/30 to-transparent flex flex-col justify-end p-4 md:p-6">
+      <h3 className="text-xl font-bold text-white">{participant.full_name}</h3>
+      {participant.description && <p className="text-sm text-white/80 mt-1 max-w-prose">{participant.description}</p>}
+    </div>
+  );
+
+  if (imageUrl) {
+    return (
+      <TiltedCard
+        imageSrc={imageUrl}
+        altText={participant.full_name}
+        containerHeight="24rem" // h-96
+        imageHeight="100%"
+        imageWidth="100%"
+        overlayContent={overlayContent}
+        displayOverlayContent={true}
+        showTooltip={false}
+      />
+    );
+  }
+
+  // Fallback for participants without an image
+  return (
+    <div className="group relative overflow-hidden rounded-lg bg-card shadow-sm border border-border/50">
+      <div className="w-full h-96 bg-muted flex items-center justify-center">
+        <span className="text-5xl font-bold text-muted-foreground">{participant.full_name ? participant.full_name.charAt(0) : '?'}</span>
       </div>
+      {overlayContent}
     </div>
   );
 }
-
 
 export default function AboutPage() {
   const { data: participants, isLoading, error } = useQuery<User[]>({
@@ -47,38 +63,40 @@ export default function AboutPage() {
   });
 
   return (
-    <div className="bg-gray-50">
+    <div className="bg-background pt-20"> {/* Added padding top for fixed header */}
       <main className="container mx-auto px-4 py-16 sm:py-24">
-        {/* Hero Section */}
-        <section className="text-center mb-20">
-          <h1 className="text-5xl md:text-7xl font-extrabold text-gray-900 tracking-tight mb-4">
+        <section className="text-center mb-20 md:mb-28">
+          <h1 className="text-5xl md:text-7xl font-extrabold text-foreground tracking-tighter mb-4">
             О нашем клубе
           </h1>
-          <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
             Мы — сообщество энтузиастов, объединенных страстью к приключениям, исследованиям и красоте дикой природы.
           </p>
         </section>
 
-        {/* Our Mission Section */}
         <section className="mb-24">
-            <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8 md:p-12">
-                <h2 className="text-4xl font-bold text-center text-gray-900 mb-8">Наша миссия</h2>
-                <div className="text-gray-700 space-y-6 text-lg text-center leading-relaxed">
-                    <p>Величественные цепи гор и завораживающие долины зовут нас каждый раз, когда глазам не хватает красоты, сознанию - свободы, а сердцу - покоя. Тоскует по напористому удару весла кристальная гладь озер и рек, а непокорные раскаты жаждут укрощения. Миллионы троп и дорог приглашают «двухколесных коней» прокатиться, даруя неповторимый ветер свободы в волосах, точно так же, как одинокие извилистые коридоры пещер рады гостям, награждая смельчаков своей звенящей тишиной и уникальной атмосферой.</p>
-                    <p>Мир открыт для нас, так давайте же вместе делать шаги к нему навстречу, а именно: ходить в походы, открывая новые горизонты; организовывать познавательные поездки и вылазки, каждый раз вынося из них что-то новое и полезное; устраивать увлекательные соревнования и тренировки, укрепляя тем самым наш командный дух и совершенствуя свои навыки и умения; проводить лекционные занятия с целью углубления теоретических знаний в различных областях туризма!</p>
+            <div className="max-w-4xl mx-auto bg-secondary/30 rounded-xl p-8 md:p-12 border border-border/50">
+                <h2 className="text-4xl font-bold text-center text-foreground mb-8">Наша миссия</h2>
+                <div className="text-muted-foreground space-y-6 text-lg text-center leading-relaxed max-w-prose mx-auto">
+                    <p>Величественные цепи гор и завораживающие долины зовут нас каждый раз, когда глазам не хватает красоты, сознанию - свободы, а сердцу - покоя. Тоскует по напористому удару весла кристальная гладь озер и рек, а непокорные раскаты жаждут укрощения.</p>
+                    <p>Мир открыт для нас, так давайте же вместе делать шаги к нему навстречу: ходить в походы, открывая новые горизонты; организовывать познавательные поездки, каждый раз вынося из них что-то новое; устраивать увлекательные соревнования, укрепляя командный дух и совершенствуя свои навыки!</p>
                 </div>
             </div>
         </section>
 
-        {/* Participants Section */}
         <section>
-          <h2 className="text-4xl font-bold text-center text-gray-900 mb-12">
+          <h2 className="text-4xl font-bold text-center text-foreground mb-12">
             Наши участники
           </h2>
           {isLoading ? (
-            <div className="text-center text-lg">Загрузка участников...</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <Skeleton className="h-96 w-full" />
+                <Skeleton className="h-96 w-full" />
+                <Skeleton className="h-96 w-full" />
+                <Skeleton className="h-96 w-full" />
+            </div>
           ) : error ? (
-            <div className="text-center text-red-500 bg-red-100 p-4 rounded-lg">Не удалось загрузить участников.</div>
+            <div className="text-center text-destructive bg-destructive/10 p-4 rounded-lg">Не удалось загрузить участников.</div>
           ) : participants && participants.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {participants.map((participant) => (
@@ -86,9 +104,9 @@ export default function AboutPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-16 border-2 border-dashed rounded-lg">
-              <p className="text-lg font-medium text-gray-500">Информация об участниках клуба скоро появится</p>
-              <p className="text-sm text-gray-400 mt-1">Мы работаем над этим разделом.</p>
+            <div className="text-center py-16 border-2 border-dashed rounded-lg border-muted-foreground/30">
+              <p className="text-lg font-medium text-muted-foreground">Информация об участниках клуба скоро появится</p>
+              <p className="text-sm text-muted-foreground/70 mt-1">Мы работаем над этим разделом.</p>
             </div>
           )}
         </section>

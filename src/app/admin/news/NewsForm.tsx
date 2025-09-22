@@ -1,25 +1,25 @@
 'use client';
 
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import dynamic from 'next/dynamic';
-const TiptapEditor = dynamic(() => import('@/components/TiptapEditor'), { ssr: false });
 import { News } from '@/types';
+
+const TiptapEditor = dynamic(() => import('@/components/TiptapEditor'), { ssr: false });
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const newsSchema = z.object({
   title: z.string().min(1, "Заголовок обязателен"),
-  summary: z.string().min(1, "Сводка обязательна"), // Removed author
+  summary: z.string().min(1, "Сводка обязательна"),
   content_html: z.string().min(1, "Содержимое обязательно"),
-  content_json: z.any(), // Added content_json
-  // Cover is optional
+  content_json: z.any(),
   cover: z.any()
     .refine((files) => files?.length <= 1, "Не более одного файла.")
     .refine((files) => files?.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Максимальный размер файла 5MB.`)
@@ -34,74 +34,88 @@ type NewsFormValues = z.infer<typeof newsSchema>;
 
 interface NewsFormProps {
   initialData?: News;
-  onSubmit: (data: NewsFormValues) => void; // Changed to send JSON object
+  onSubmit: (data: NewsFormValues) => void;
   isPending: boolean;
   submitButtonText?: string;
 }
 
 export default function NewsForm({ initialData, onSubmit, isPending, submitButtonText = 'Сохранить' }: NewsFormProps) {
-  console.log('NewsForm rendered'); // Added log
-  const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<NewsFormValues>({
+  const form = useForm<NewsFormValues>({
     resolver: zodResolver(newsSchema),
     defaultValues: {
       title: initialData?.title || '',
       summary: initialData?.summary || '',
       content_html: initialData?.content_html || '',
-      content_json: initialData?.content_json || '', // Changed to empty string
+      content_json: initialData?.content_json || undefined,
     },
   });
-  console.log('Form errors:', errors); // Added log
-
-  const handleFormSubmit = (data: NewsFormValues) => {
-    console.log('handleFormSubmit called', data); // Added log
-    const updateData = {
-      title: data.title,
-      summary: data.summary, // Removed author
-      content_html: data.content_html,
-      content_json: data.content_json,
-    };
-    console.log('Calling onSubmit prop', updateData); // Added log
-    onSubmit(updateData); // Submit JSON object
-  };
 
   return (
-    <form onSubmit={(e) => { console.log('Form onSubmit event fired'); handleSubmit(handleFormSubmit)(e); }} className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="title">Заголовок</Label>
-        <Input id="title" {...register('title')} />
-        {errors.title && <p className="text-sm text-red-500">{errors.title.message}</p>}
-      </div>
+    <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Заголовок</FormLabel>
+                        <FormControl><Input {...field} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
 
-      <div className="space-y-2">
-        <Label htmlFor="summary">Сводка</Label>
-        <Textarea id="summary" {...register('summary')} />
-        {errors.summary && <p className="text-sm text-red-500">{errors.summary.message}</p>}
-      </div>
+            <FormField
+                control={form.control}
+                name="summary"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Сводка</FormLabel>
+                        <FormControl><Textarea {...field} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
 
-      {/* Cover input is removed from the edit form if initialData is present */}
-      {!initialData && (
-        <div className="space-y-2">
-          <Label htmlFor="cover">Обложка (оставьте пустым, чтобы не менять)</Label>
-          <Input id="cover" type="file" {...register('cover')} />
-          {errors.cover && typeof errors.cover.message === 'string' && <p className="text-sm text-red-500">{errors.cover.message}</p>}
-        </div>
-      )}
+            {!initialData && (
+                <FormField
+                    control={form.control}
+                    name="cover"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Обложка</FormLabel>
+                            <FormControl><Input type="file" onChange={e => field.onChange(e.target.files)} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            )}
 
-      <div className="space-y-2">
-        <Label>Содержимое</Label>
-        <Controller
-          name="content_html"
-          control={control}
-          render={({ field }) => (
-              <TiptapEditor value={field.value} onChange={(content) => { field.onChange(content.html); setValue('content_json', content.json); }} />
-          )}
-        />
-        {errors.content_html && <p className="text-sm text-red-500">{errors.content_html.message}</p>}
-      </div>
+            <FormField
+                control={form.control}
+                name="content_html"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Содержимое</FormLabel>
+                        <FormControl>
+                            <TiptapEditor 
+                                value={field.value} 
+                                onChange={(content) => { 
+                                    field.onChange(content.html); 
+                                    form.setValue('content_json', content.json); 
+                                }}
+                                bucketName="tkirbis-news-media"
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
 
-      <button type="submit" disabled={isPending} className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50">
-        {isPending ? 'Сохранение...' : submitButtonText}
-      </button>
-    </form>
+            <Button type="submit" disabled={isPending}>
+                {isPending ? 'Сохранение...' : submitButtonText}
+            </Button>
+        </form>
+    </Form>
   );
 }

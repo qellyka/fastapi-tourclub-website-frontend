@@ -1,6 +1,4 @@
-"use client"
-
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/hooks/use-toast";
 import {
   Toast,
   ToastClose,
@@ -8,11 +6,11 @@ import {
   ToastProvider,
   ToastTitle,
   ToastViewport,
-  ToastAction, // Added ToastAction
-} from "@/components/ui/toast"
+  ToastAction,
+} from "@/components/ui/toast";
 
 export function Toaster() {
-  const { toasts } = useToast()
+  const { toasts, toast: showToast } = useToast();
 
   return (
     <ToastProvider>
@@ -26,13 +24,13 @@ export function Toaster() {
               )}
             </div>
             {action}
-            {(variant === 'destructive' || variant === 'warning') && description && (
+            {variant === 'destructive' && description && (
               <ToastAction
-                altText="Copy error message"
+                altText="Скопировать ошибку"
                 onClick={() => {
                   if (typeof description === 'string') {
                     navigator.clipboard.writeText(description);
-                    // Optionally, show a temporary 'Copied!' toast
+                    showToast({ variant: 'success', title: 'Скопировано!', description: 'Текст ошибки скопирован в буфер обмена.' });
                   }
                 }}
               >
@@ -41,9 +39,9 @@ export function Toaster() {
             )}
             <ToastClose />
           </Toast>
-        )
+        );
       })}
       <ToastViewport />
     </ToastProvider>
-  )
+  );
 }

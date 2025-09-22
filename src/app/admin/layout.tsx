@@ -10,39 +10,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
 
   useEffect(() => {
-    // This effect runs only on the client after hydration
-    if (!isLoading && (!user || !user.roles.includes('admin'))) {
-      router.push('/'); // Redirect to home page if not an admin
+    if (!isLoading && (!user || !user?.roles?.includes('admin'))) {
+      router.push('/');
     }
   }, [user, isLoading, router]);
 
-  // On the server, and on the initial client render, show a generic loading state
-  // if we don't have the user information yet.
-  if (isLoading || !user) {
+  if (isLoading || !user || !user?.roles?.includes('admin')) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-100">
-        <div className="text-xl font-semibold text-gray-700">Загрузка...</div>
-      </div>
-    );
-  }
-
-  // If the user is an admin, show the admin layout.
-  // If not, this will be briefly rendered before the useEffect redirects.
-  // To prevent even a flash of content, we can add the role check here too.
-  if (!user.roles.includes('admin')) {
-    // This will be the case for non-admin users on the client before redirect.
-    // We can show the same loading screen to prevent any content flash.
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-100">
-        <div className="text-xl font-semibold text-gray-700">Проверка доступа...</div>
+      <div className="flex items-center justify-center h-screen bg-background">
+        <div className="text-xl font-semibold text-foreground">Загрузка...</div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-background">
       <AdminSidebar />
-      <main className="flex-1 p-8 overflow-y-auto">
+      <main className="flex-1 p-6 lg:p-8 overflow-y-auto">
         {children}
       </main>
     </div>

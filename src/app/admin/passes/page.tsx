@@ -8,18 +8,52 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DotsHorizontalIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
-async function fetchPasses(): Promise<any> {
+async function fetchPasses(): Promise<{ detail: Pass[] }> {
   const { data } = await api.get('/archive/passes');
   return data;
 }
+
+const TableSkeleton = () => (
+    <div className="space-y-4">
+        <div className="flex justify-between items-center">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-10 w-32" />
+        </div>
+        <Card>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead><Skeleton className="h-6 w-12" /></TableHead>
+                        <TableHead><Skeleton className="h-6 w-64" /></TableHead>
+                        <TableHead><Skeleton className="h-6 w-32" /></TableHead>
+                        <TableHead><Skeleton className="h-6 w-24" /></TableHead>
+                        <TableHead><Skeleton className="h-6 w-24" /></TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {[...Array(5)].map((_, i) => (
+                        <TableRow key={i}>
+                            <TableCell><Skeleton className="h-5 w-12" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-64" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </Card>
+    </div>
+)
 
 export default function AdminPassesPage() {
   const queryClient = useQueryClient();
   const { data: passes, isLoading, error } = useQuery<Pass[]>({
     queryKey: ['admin-passes'],
-    queryFn: fetchPasses,
-    select: (data) => data.detail, // Assuming the same response structure
+    queryFn: async () => (await fetchPasses()).detail,
   });
 
   const deleteMutation = useMutation({
@@ -29,34 +63,37 @@ export default function AdminPassesPage() {
     },
   });
 
-  if (isLoading) return <div>Загрузка перевалов...</div>;
-  if (error) return <div>Ошибка при загрузке: {error.message}</div>;
+  if (isLoading) return <TableSkeleton />;
+  if (error) return <div className="text-destructive text-center py-16">Ошибка при загрузке: {error.message}</div>;
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Управление перевалами</h1>
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <div>
+            <h1 className="text-2xl font-bold">Управление перевалами</h1>
+            <p className="text-muted-foreground">Просмотр, создание, редактирование и удаление перевалов.</p>
+        </div>
         <Button asChild>
           <Link href="/admin/passes/new">Добавить перевал</Link>
         </Button>
       </div>
-      <div className="border rounded-lg">
+      <Card>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
+              <TableHead className="w-[80px]">ID</TableHead>
               <TableHead>Название</TableHead>
               <TableHead>Регион</TableHead>
               <TableHead>Сложность</TableHead>
               <TableHead>Высота</TableHead>
-              <TableHead></TableHead>
+              <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {passes?.map((pass) => (
-              <TableRow key={pass.id} className="hover:bg-gray-50 transition-colors duration-150">
+              <TableRow key={pass.id} className="hover:bg-secondary">
                 <TableCell>{pass.id}</TableCell>
-                <TableCell>{pass.name}</TableCell>
+                <TableCell className="font-medium">{pass.name}</TableCell>
                 <TableCell>{pass.region}</TableCell>
                 <TableCell>{pass.complexity}</TableCell>
                 <TableCell>{pass.height} м</TableCell>
@@ -64,6 +101,7 @@ export default function AdminPassesPage() {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Открыть меню</span>
                         <DotsHorizontalIcon className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -72,7 +110,7 @@ export default function AdminPassesPage() {
                         <Link href={`/admin/passes/edit/${pass.id}`}>Редактировать</Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        className="text-red-500"
+                        className="text-destructive"
                         onClick={() => {
                           if (confirm('Вы уверены, что хотите удалить этот перевал?')) {
                             deleteMutation.mutate(pass.id);
@@ -88,7 +126,7 @@ export default function AdminPassesPage() {
             ))}
           </TableBody>
         </Table>
-      </div>
+      </Card>
     </div>
   );
 }

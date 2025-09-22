@@ -65,7 +65,7 @@ export default function AdminParticipantsPage() {
           </TableHeader>
           <TableBody>
             {participants?.map((participant, index) => (
-              <TableRow key={participant.id || index} className="hover:bg-gray-50 transition-colors duration-150">
+              <TableRow key={participant.id || index} className="hover:bg-muted/50 transition-colors duration-150">
                 <TableCell>{participant.id}</TableCell>
                 <TableCell>{participant.full_name}</TableCell>
                 <TableCell>{participant.username}</TableCell>

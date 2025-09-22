@@ -10,10 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@/types';
 import { useState } from 'react';
+import { UserSearchCombobox } from '@/components/UserSearchCombobox';
 
 const participantSchema = z.object({
   description: z.string().min(1, "Описание обязательно"),
@@ -24,15 +24,23 @@ type ParticipantFormValues = z.infer<typeof participantSchema>;
 
 async function fetchUsers(): Promise<User[]> {
   const { data } = await api.get('/users');
-  // Assuming the API returns { detail: [...] }
-  return data.detail;
+  
+  if (data && Array.isArray(data.detail)) {
+    return data.detail;
+  }
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  console.error("Unexpected data structure from /users endpoint:", data);
+  return [];
 }
 
 export default function NewParticipantPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState("");
 
   const { data: users, isLoading: isLoadingUsers, isError: isErrorUsers } = useQuery<User[]>({
     queryKey: ['all-users'],
@@ -50,6 +58,7 @@ export default function NewParticipantPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-club-participants'] });
       toast({
+        variant: 'success',
         title: 'Успех!',
         description: 'Участник клуба успешно создан.',
       });
@@ -64,17 +73,16 @@ export default function NewParticipantPage() {
         errorMessage = JSON.stringify(errorDetail);
       }
       toast({
+        variant: 'destructive',
         title: 'Ошибка!',
         description: errorMessage,
-        variant: 'destructive',
       });
     },
   });
 
-  const handleUserSelect = (userId: string) => {
-    const user = users?.find(u => String(u.id) === userId);
-    setSelectedUser(user || null);
-  };
+  console.log('Value of \'users\' variable:', users);
+  console.log('Type of \'users\' variable:', typeof users);
+  const selectedUser = users?.find(u => String(u.id) === selectedUserId);
 
   const onSubmit = (data: ParticipantFormValues) => {
     if (!selectedUser) {
@@ -95,7 +103,7 @@ export default function NewParticipantPage() {
   };
 
   if (isLoadingUsers) return <div className="container mx-auto px-4 py-24 text-center">Загрузка пользователей...</div>;
-  if (isErrorUsers) return <div className="container mx-auto px-4 py-24 text-center">Не удалось загрузить пользователей.</div>;
+  if (isErrorUsers || !users) return <div className="container mx-auto px-4 py-24 text-center">Не удалось загрузить пользователей.</div>;
 
   return (
     <div>
@@ -104,18 +112,12 @@ export default function NewParticipantPage() {
       <div className="space-y-6">
         <div className="space-y-2">
           <Label>1. Выберите существующий аккаунт</Label>
-          <Select onValueChange={handleUserSelect}>
-            <SelectTrigger>
-              <SelectValue placeholder="Выберите пользователя из списка" />
-            </SelectTrigger>
-            <SelectContent>
-              {users?.map((user) => (
-                <SelectItem key={user.id} value={String(user.id)}>
-                  {user.full_name} ({user.email})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <UserSearchCombobox 
+            users={users}
+            value={selectedUserId}
+            onSelect={setSelectedUserId}
+            placeholder="Поиск по имени или логину..."
+          />
         </div>
 
         {selectedUser && (

@@ -1,42 +1,50 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Newspaper, Users, Mountain, Map, FileText, Link2 } from 'lucide-react';
+import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Briefcase, Home, Newspaper, Users, Mountain, Link2, ClipboardList, MountainSnow } from "lucide-react";
 
-const adminNavItems = [
-  { name: "Статьи", href: "/admin/articles", icon: Newspaper },
-  { name: "Новости", href: "/admin/news", icon: FileText },
-  { name: "Походы", href: "/admin/hikes", icon: Mountain },
-  { name: "Перевалы", href: "/admin/passes", icon: Map },
-  { name: "Пользователи", href: "/admin/users", icon: Users },
-  { name: "Участники", href: "/admin/participants", icon: Users },
-  { name: "Связи", href: "/admin/link", icon: Link2 },
+const links = [
+    { href: "/admin", label: "Главная", icon: Home },
+    { href: "/admin/hikes", label: "Походы", icon: Mountain },
+    { href: "/admin/passes", label: "Перевалы", icon: MountainSnow },
+    { href: "/admin/news", label: "Новости", icon: Newspaper },
+    { href: "/admin/articles", label: "Статьи", icon: Briefcase },
+    { href: "/admin/users", label: "Пользователи", icon: Users },
+    { href: "/admin/participants", label: "Участники", icon: Users },
+    { href: "/admin/add-participants", label: "Прикрепление к походам", icon: Users },
+    { href: "/admin/link", label: "Связи", icon: Link2 },
+    { href: "/admin/school-applications", label: "Заявки в школу", icon: ClipboardList },
 ];
 
 export function AdminSidebar() {
-  const pathname = usePathname();
+    const pathname = usePathname();
 
   return (
-    <aside className="w-64 flex-shrink-0 bg-gray-50 border-r border-gray-200 flex flex-col">
-      <div className="p-4 border-b border-gray-200">
-        <Link href="/admin" className="text-2xl font-bold text-gray-800 hover:text-blue-600 transition-colors">
-          Панель
+    <aside className="w-64 flex-shrink-0 bg-card border-r border-border flex flex-col">
+      <div className="p-4 border-b border-border">
+        <Link href="/" className="text-2xl font-bold text-foreground hover:text-primary transition-colors">
+          Ирбис Админ
         </Link>
       </div>
       <nav className="flex-grow p-4">
-        <ul className="space-y-2">
-          {adminNavItems.map((item) => {
-            const isActive = pathname.startsWith(item.href);
+        <ul className="space-y-1">
+          {links.map((item) => {
+            const isActive = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
             return (
-              <li key={item.name}>
+              <li key={item.label}>
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-3 p-3 rounded-lg transition-colors text-gray-700 font-medium 
-                    ${isActive ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-200'}`}
+                  className={cn(
+                    "flex items-center gap-3 p-3 rounded-md transition-colors font-medium text-muted-foreground",
+                    isActive 
+                        ? "bg-primary/10 text-primary font-semibold"
+                        : "hover:bg-muted hover:text-foreground"
+                  )}
                 >
                   <item.icon className="h-5 w-5" />
-                  <span>{item.name}</span>
+                  <span>{item.label}</span>
                 </Link>
               </li>
             );

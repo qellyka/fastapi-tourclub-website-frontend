@@ -1,21 +1,28 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useFieldArray, useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from '@/hooks/use-toast';
 import { Hike, User } from '@/types';
-import { useState } from 'react';
+import { Trash2, PlusCircle } from 'lucide-react';
+import { UserSearchCombobox } from '@/components/UserSearchCombobox';
+
+const participantSchema = z.object({
+  participant_id: z.string().min(1, "Выберите участника"),
+  role: z.string().min(1, "Укажите роль"),
+});
 
 const addParticipantsSchema = z.object({
   hike_id: z.string().min(1, "Поход обязателен"),
-  participant_ids: z.array(z.string()).min(1, "Выберите хотя бы одного участника"),
+  participants: z.array(participantSchema).min(1, "Добавьте хотя бы одного участника"),
 });
 
 type AddParticipantsFormValues = z.infer<typeof addParticipantsSchema>;
@@ -25,15 +32,14 @@ async function fetchAllHikes(): Promise<any> {
   return data;
 }
 
-async function fetchAllParticipants(): Promise<any> {
-  const { data } = await api.get('/club/participants');
+async function fetchAllUsers(): Promise<any> {
+  const { data } = await api.get('/users');
   return data;
 }
 
 export default function AddParticipantsToHikePage() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [error, setError] = useState<string | null>(null);
 
   const { data: hikes, isLoading: isLoadingHikes } = useQuery<Hike[]>({
     queryKey: ['all-hikes'],
@@ -41,21 +47,38 @@ export default function AddParticipantsToHikePage() {
     select: (data) => data.detail,
   });
 
-  const { data: participants, isLoading: isLoadingParticipants } = useQuery<User[]>({
-    queryKey: ['all-club-participants'],
-    queryFn: fetchAllParticipants,
+  const { data: allParticipants, isLoading: isLoadingParticipants } = useQuery<User[]>({
+    queryKey: ['all-users'],
+    queryFn: fetchAllUsers,
     select: (data) => data.detail,
   });
 
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<AddParticipantsFormValues>({
+  const { control, register, handleSubmit, formState: { errors } } = useForm<AddParticipantsFormValues>({
     resolver: zodResolver(addParticipantsSchema),
+    defaultValues: {
+      hike_id: '',
+      participants: [{ participant_id: '', role: '' }],
+    },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "participants",
   });
 
   const mutation = useMutation({
-    mutationFn: (data: AddParticipantsFormValues) => api.post('/archive/participants', {
-      hike_id: Number(data.hike_id),
-      participant_ids: data.participant_ids.map(Number),
-    }),
+    mutationFn: (data: AddParticipantsFormValues) => {
+      const payload = data.participants.map(p => {
+        const participantId = parseInt(p.participant_id, 10);
+        const hikeId = parseInt(data.hike_id, 10);
+        return {
+          user_id: isNaN(participantId) ? 0 : participantId,
+          hike_id: isNaN(hikeId) ? 0 : hikeId,
+          role: p.role
+        };
+      });
+      return api.post('/archive/participants', payload);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['hikes'] });
       queryClient.invalidateQueries({ queryKey: ['hike-participants'] });
@@ -63,20 +86,32 @@ export default function AddParticipantsToHikePage() {
         title: 'Успех!',
         description: 'Участники успешно добавлены к походу!',
       });
-      router.push('/admin'); // Redirect to admin dashboard or relevant page
+      router.push('/admin/hikes');
     },
     onError: (err: any) => {
-      setError(err.response?.data?.detail || "Произошла ошибка при добавлении участников");
+      let description = "Произошла ошибка при добавлении участников";
+      const errorDetail = err.response?.data?.detail;
+
+      if (typeof errorDetail === 'string') {
+        description = errorDetail;
+      } else if (Array.isArray(errorDetail)) {
+        description = errorDetail.map(e => `${e.loc.join(' -> ')}: ${e.msg}`).join('\n');
+      }
+
+      toast({
+        title: 'Ошибка!',
+        description: description,
+        variant: 'destructive',
+      });
     },
   });
 
   const onSubmit = (data: AddParticipantsFormValues) => {
-    setError(null);
     mutation.mutate(data);
   };
 
   if (isLoadingHikes || isLoadingParticipants) return <div>Загрузка данных...</div>;
-  if (error) return <div>Ошибка при загрузке данных для добавления участников.</div>;
+  if (!hikes || !allParticipants) return <div>Ошибка при загрузке данных.</div>;
 
   return (
     <div>
@@ -84,39 +119,72 @@ export default function AddParticipantsToHikePage() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-2">
           <Label htmlFor="hike_id">Поход</Label>
-          <Select onValueChange={(value) => setValue('hike_id', value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Выберите поход" />
-            </SelectTrigger>
-            <SelectContent>
-              {hikes?.map((hike) => (
-                <SelectItem key={hike.id} value={String(hike.id)}>{hike.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Controller
+            name="hike_id"
+            control={control}
+            render={({ field }) => (
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Выберите поход" />
+                </SelectTrigger>
+                <SelectContent>
+                  {hikes.map((hike) => (
+                    <SelectItem key={hike.id} value={String(hike.id)}>{hike.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
           {errors.hike_id && <p className="text-sm text-red-500">{errors.hike_id.message}</p>}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="participant_ids">Участники</Label>
-          {/* This would ideally be a multi-select component */}
-          <Select onValueChange={(value) => setValue('participant_ids', [value])} multiple={true}>
-            <SelectTrigger>
-              <SelectValue placeholder="Выберите участников" />
-            </SelectTrigger>
-            <SelectContent>
-              {participants?.map((participant) => (
-                <SelectItem key={participant.id} value={String(participant.id)}>{participant.full_name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errors.participant_ids && <p className="text-sm text-red-500">{errors.participant_ids.message}</p>}
+        <div className="space-y-4">
+            <Label>Участники</Label>
+            {fields.map((field, index) => (
+                <div key={field.id} className="flex items-center gap-4 p-4 border rounded-lg bg-card">
+                    <div className="flex-1 space-y-2">
+                        <Label htmlFor={`participants.${index}.participant_id`}>Участник</Label>
+                        <Controller
+                            name={`participants.${index}.participant_id`}
+                            control={control}
+                            render={({ field }) => (
+                                <UserSearchCombobox 
+                                    users={allParticipants}
+                                    value={field.value}
+                                    onSelect={field.onChange}
+                                />
+                            )}
+                        />
+                         {errors.participants?.[index]?.participant_id && <p className="text-sm text-red-500">{errors.participants?.[index]?.participant_id?.message}</p>}
+                    </div>
+                    <div className="flex-1 space-y-2">
+                        <Label htmlFor={`participants.${index}.role`}>Роль</Label>
+                        <Input
+                            {...register(`participants.${index}.role`)}
+                            placeholder="Например, Руководитель"
+                        />
+                        {errors.participants?.[index]?.role && <p className="text-sm text-red-500">{errors.participants?.[index]?.role?.message}</p>}
+                    </div>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="self-end mb-1 text-muted-foreground hover:text-destructive">
+                        <Trash2 className="h-5 w-5" />
+                    </Button>
+                </div>
+            ))}
+             {errors.participants && <p className="text-sm text-red-500">{errors.participants.message}</p>}
         </div>
 
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => append({ participant_id: '', role: '' })}
+          className="w-full flex items-center gap-2"
+        >
+          <PlusCircle className="h-4 w-4" />
+          Добавить участника
+        </Button>
 
-        <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? 'Добавление...' : 'Добавить участников'}
+        <Button type="submit" disabled={mutation.isPending} className="w-full">
+          {mutation.isPending ? 'Добавление...' : 'Сохранить участников'}
         </Button>
       </form>
     </div>

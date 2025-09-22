@@ -15,7 +15,7 @@ export default function RichTextRenderer({ html }: RichTextRendererProps) {
 
   return (
     <div 
-      className="prose lg:prose-xl max-w-none"
+      className="max-w-none"
       dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
     />
   );
