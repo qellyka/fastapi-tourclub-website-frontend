@@ -53,15 +53,15 @@ const nextConfig = {
         return [
             {
                 source: '/api/:path*',
-                destination: 'http://' + process.env.NEXT_PUBLIC_BACKEND_URL + '/api/:path*',
+                destination: 'https://' + process.env.NEXT_PUBLIC_BACKEND_URL + '/api/:path*',
             },
             {
                 source: '/hikes/:id/report',
-                destination: 'http://' + process.env.NEXT_PUBLIC_BACKEND_URL + '/api/archive/hikes/:id/file/report',
+                destination: 'https://' + process.env.NEXT_PUBLIC_BACKEND_URL + '/api/archive/hikes/:id/file/report',
             },
             {
                 source: '/hikes/:id/route',
-                destination: 'http://' + process.env.NEXT_PUBLIC_BACKEND_URL + '/api/archive/hikes/:id/file/route',
+                destination: 'https://' + process.env.NEXT_PUBLIC_BACKEND_URL + '/api/archive/hikes/:id/file/route',
             },
         ];
     },
