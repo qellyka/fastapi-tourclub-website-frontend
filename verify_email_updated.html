@@ -4,57 +4,112 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Подтверждение Email</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+    body {
+        margin: 0; padding: 0; background-color: #f4f4f4; font-family: 'Inter', Arial, sans-serif; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;
+    }
+    table {
+        border-spacing: 0; border-collapse: collapse;
+    }
+    td {
+        padding: 0;
+    }
+    img {
+        border: 0;
+    }
+    .wrapper {
+        width: 100%; table-layout: fixed; background-color: #f4f4f4; padding-bottom: 60px;
+    }
+    .main {
+        background-color: #ffffff; margin: 0 auto; width: 100%; max-width: 600px; border-radius: 8px; border: 1px solid #e0e0e0; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .header-image {
+        background-size: cover; background-position: center; text-align: center; color: white; padding: 30px 20px;
+    }
+    .header-text {
+        font-size: 2.2em; line-height: 1.2; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    .content-block {
+        padding: 30px 40px; text-align: center; color: #333333;
+    }
+    .button {
+        display: inline-block; padding: 12px 25px; margin: 20px 0; background-color: #00bcd4; color: #ffffff; font-size: 1.1em; font-weight: bold; text-decoration: none; border-radius: 6px; transition: background-color 0.3s ease;
+    }
+    .button:hover {
+        background-color: #00a8be;
+    }
+    .footer {
+        border-top: 1px solid #e0e0e0; padding-top: 20px; font-size: 0.85em; color: #777777;
+    }
+
+    @media screen and (max-width: 600px) {
+        .main {
+            width: 100% !important; border-radius: 0 !important; border: none !important; box-shadow: none !important;
+        }
+        .content-block {
+            padding: 20px !important;
+        }
+        .header-text {
+            font-size: 1.8em !important;
+        }
+        .button {
+            padding: 10px 20px !important; font-size: 1em !important;
+        }
+    }
+    @media screen and (max-width: 400px) {
+        .header-text {
+            font-size: 1.5em !important;
+        }
+    }
+</style>
 </head>
-<body style="margin:0; padding:0; background-color:#ffffff; font-family: Arial, sans-serif;">
+<body style="margin:0; padding:0; background-color:#f4f4f4; font-family: 'Inter', Arial, sans-serif;">
 
-<table width="100%" cellpadding="0" cellspacing="0" border="0" align="center" bgcolor="#ffffff">
-<tr>
-    <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; border-radius:8px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+<center class="wrapper">
+    <table class="main" width="100%" cellpadding="0" cellspacing="0" border="0">
 
-            <!-- Шапка с текстом прямо на картинке -->
-            <tr>
-                <td width="600" height="200" align="center" valign="top"
-                    background="https://system-media.tkirbis30.ru/email.png"
-                    style="background-size:cover; background-position:center; text-align:center; color:white;">
-                    <div style="padding-top:30px; font-size:2.5em; line-height:1.2; font-weight:bold;">
-                        Подтвердите вашу почту
-                    </div>
-                </td>
-            </tr>
+        <!-- Шапка с текстом прямо на картинке -->
+        <tr>
+            <td class="header-image" height="200" align="center" valign="middle"
+                background="https://system-media.tkirbis30.ru/email.png">
+                <div class="header-text">
+                    Подтвердите вашу почту
+                </div>
+            </td>
+        </tr>
 
-            <!-- Основной блок -->
-            <tr>
-                <td bgcolor="#174785" style="padding:30px 20px; text-align:center; color:white;">
-                    <p style="margin:15px 0; font-size:1.1em; line-height:1.6;">
-                        Спасибо за регистрацию в Турклубе Ирбис! Пожалуйста, подтвердите вашу почту, нажав на кнопку ниже:
-                    </p>
+        <!-- Основной блок -->
+        <tr>
+            <td class="content-block">
+                <p style="margin:15px 0; font-size:1.1em; line-height:1.6;">
+                    Спасибо за регистрацию в Турклубе Ирбис! Пожалуйста, подтвердите вашу почту, нажав на кнопку ниже:
+                </p>
 
-                    <!-- Кнопка -->
-                    <a href="{{ verify_link }}" style="display:inline-block; padding:12px 25px; margin:20px 0; background-color:#2d599a; color:#ffffff; font-size:1.2em; font-weight:bold; text-decoration:none; border-radius:5px;">
-                        Подтвердить Email
-                    </a>
+                <!-- Кнопка -->
+                <a href="{{ verify_link }}" class="button">
+                    Подтвердить Email
+                </a>
 
-                    <p style="margin:15px 0; font-size:1.1em; line-height:1.6;">
-                        Если вы не регистрировались, просто проигнорируйте это письмо.
-                    </p>
+                <p style="margin:15px 0; font-size:1.1em; line-height:1.6;">
+                    Если вы не регистрировались, просто проигнорируйте это письмо.
+                </p>
 
-                    <!-- Футер -->
-                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                        <tr>
-                            <td align="center" style="border-top:1px solid rgba(255,255,255,0.3); padding-top:20px; font-size:0.9em;">
-                                Турклуб Ирбис &copy; 2025
-                            </td>
-                        </tr>
-                    </table>
+                <!-- Футер -->
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                        <td class="footer" align="center">
+                            Турклуб Ирбис &copy; 2025
+                        </td>
+                    </tr>
+                </table>
 
-                </td>
-            </tr>
+            </td>
+        </tr>
 
-        </table>
-    </td>
-</tr>
-</table>
+    </table>
+</center>
 
 </body>
 </html>

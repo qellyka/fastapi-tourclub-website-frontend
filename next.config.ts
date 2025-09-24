@@ -50,18 +50,27 @@ const nextConfig = {
         ],
     },
     async rewrites() {
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+        const getFullBackendUrl = (path: string) => {
+            if (!backendUrl) return path; // Fallback or error if not set
+            if (backendUrl.startsWith('http://') || backendUrl.startsWith('https://')) {
+                return backendUrl + path;
+            }
+            return `http://${backendUrl}${path}`;
+        };
+
         return [
             {
                 source: '/api/:path*',
-                destination: process.env.NEXT_PUBLIC_BACKEND_URL + '/api/:path*',
+                destination: getFullBackendUrl('/api/:path*'),
             },
             {
                 source: '/hikes/:id/report',
-                destination: process.env.NEXT_PUBLIC_BACKEND_URL + '/api/archive/hikes/:id/file/report',
+                destination: getFullBackendUrl('/api/archive/hikes/:id/file/report'),
             },
             {
                 source: '/hikes/:id/route',
-                destination: process.env.NEXT_PUBLIC_BACKEND_URL + '/api/archive/hikes/:id/file/route',
+                destination: getFullBackendUrl('/api/archive/hikes/:id/file/route'),
             },
         ];
     },
