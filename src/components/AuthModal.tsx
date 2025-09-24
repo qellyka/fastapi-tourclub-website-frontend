@@ -40,7 +40,10 @@ function LoginForm() {
       hideAuthModal();
     },
     onError: (err: any) => {
-      const errorMessage = err.response?.data?.detail || "Произошла непредвиденная ошибка";
+      let errorMessage = err.response?.data?.detail || "Произошла непредвиденная ошибка";
+      if (typeof errorMessage === 'object') {
+        errorMessage = JSON.stringify(errorMessage);
+      }
       toast({ variant: 'destructive', title: 'Ошибка входа', description: errorMessage });
     },
   });
@@ -92,7 +95,10 @@ function RegisterForm() {
       setSuccess(true);
     },
     onError: (err: any) => {
-      const errorMessage = err.response?.data?.detail || "Произошла непредвиденная ошибка";
+      let errorMessage = err.response?.data?.detail || "Произошла непредвиденная ошибка";
+      if (typeof errorMessage === 'object') {
+        errorMessage = JSON.stringify(errorMessage);
+      }
       toast({ variant: 'destructive', title: 'Ошибка регистрации', description: errorMessage });
     },
   });

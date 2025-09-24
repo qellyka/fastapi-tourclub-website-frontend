@@ -1,0 +1,187 @@
+PS D:\dev\turclub-site\frontend> docker build --no-cache --build-arg NEXT_PUBLIC_BACKEND_URL="http://localhost:8000" --build-arg NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN="pk.eyJ1Ijoia2lucHIiLCJhIjoiY21mZnM2c3NvMGowaDJvcjk5cmg1ZjVtbCJ9.5-DLd0zGyuPP0VwFjqxO1w" -t turclub-frontend:1.0.0 . 
+[+] Building 68.5s (13/16)                                                                                                                                                               docker:desktop-linux
+ => [internal] load build definition from Dockerfile                                                                                                                                                     0.0s
+ => => transferring dockerfile: 2.08kB                                                                                                                                                                   0.0s 
+ => [internal] load metadata for docker.io/oven/bun:1                                                                                                                                                    0.7s 
+ => [internal] load .dockerignore                                                                                                                                                                        0.0s
+ => => transferring context: 208B                                                                                                                                                                        0.0s 
+ => [base 1/2] FROM docker.io/oven/bun:1@sha256:66ba69deede44e3af5dc542def218fdb3bcad2205900ea761dc5623bf973d2df                                                                                         0.0s 
+ => => resolve docker.io/oven/bun:1@sha256:66ba69deede44e3af5dc542def218fdb3bcad2205900ea761dc5623bf973d2df                                                                                              0.0s 
+ => [internal] load build context                                                                                                                                                                        0.1s 
+ => => transferring context: 69.07kB                                                                                                                                                                     0.1s 
+ => CACHED [builder 1/4] WORKDIR /app                                                                                                                                                                    0.0s 
+ => CACHED [base 2/2] WORKDIR /app                                                                                                                                                                       0.0s 
+ => [runner 2/5] RUN addgroup --system --gid 1001 nodejs &&     adduser --system --uid 1001 nextjs                                                                                                       0.4s 
+ => [deps 1/2] COPY package.json bun.lock* ./                                                                                                                                                            0.1s
+ => [deps 2/2] RUN bun install --no-save --frozen-lockfile                                                                                                                                              22.9s 
+ => [builder 2/4] COPY --from=deps /app/node_modules ./node_modules                                                                                                                                      7.9s
+ => [builder 3/4] COPY . .                                                                                                                                                                               0.6s
+ => ERROR [builder 4/4] RUN bun run build                                                                                                                                                               32.6s
+------
+ > [builder 4/4] RUN bun run build:
+0.448 $ next build
+2.309 Attention: Next.js now collects completely anonymous telemetry regarding usage.
+2.309 This information is used to shape Next.js' roadmap and prioritize features.
+2.309 You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+2.309 https://nextjs.org/telemetry
+2.309
+2.369    ▲ Next.js 15.5.2
+2.369    - Environments: .env.local
+2.369
+2.464    Creating an optimized production build ...
+28.65  ✓ Compiled successfully in 21.8s
+28.67    Linting and checking validity of types ...
+32.16
+32.16 Failed to compile.
+32.16
+32.16 ./src/hooks/use-toast.ts
+32.16 21:7  Warning: 'actionTypes' is assigned a value but only used as a type.  @typescript-eslint/no-unused-vars
+32.16
+32.16 ./src/app/about/page.tsx
+32.16 6:8  Warning: 'Image' is defined but never used.  @typescript-eslint/no-unused-vars
+32.16
+32.16 ./src/app/page.tsx
+32.16 8:10  Warning: 'useSearchParams' is defined but never used.  @typescript-eslint/no-unused-vars
+32.16 11:22  Warning: 'Bike' is defined but never used.  @typescript-eslint/no-unused-vars
+32.16 15:10  Warning: 'cn' is defined but never used.  @typescript-eslint/no-unused-vars
+32.16
+32.16 ./src/app/school/page.tsx
+32.16 13:10  Warning: 'ToastAction' is defined but never used.  @typescript-eslint/no-unused-vars
+32.16 21:11  Warning: 'showAuthModal' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+32.16
+32.16 ./src/app/school/ApplicationForm.tsx
+32.16 65:22  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16
+32.16 ./src/app/(protected)/archive/passes/page.tsx
+32.16 27:55  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16
+32.16 ./src/app/(protected)/profile/ProfileClientPage.tsx
+32.16 13:37  Warning: 'error' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+32.16
+32.16 ./src/app/admin/passes/edit/[id]/page.tsx
+32.16 60:24  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16 70:20  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16
+32.16 ./src/app/admin/passes/new/page.tsx
+32.16 14:10  Warning: 'useState' is defined but never used.  @typescript-eslint/no-unused-vars
+32.16 39:24  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16 48:20  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16
+32.16 ./src/app/admin/articles/edit/[id]/EditForm.tsx
+32.16 16:9  Warning: 'router' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+32.16 36:20  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16
+32.16 ./src/app/admin/articles/page.tsx
+32.16 11:16  Warning: 'CardHeader' is defined but never used.  @typescript-eslint/no-unused-vars
+32.16 11:28  Warning: 'CardTitle' is defined but never used.  @typescript-eslint/no-unused-vars
+32.16 11:39  Warning: 'CardDescription' is defined but never used.  @typescript-eslint/no-unused-vars
+32.16 11:56  Warning: 'CardContent' is defined but never used.  @typescript-eslint/no-unused-vars
+32.16
+32.16 ./src/app/admin/articles/ArticleForm.tsx
+32.16 11:10  Warning: 'useState' is defined but never used.  @typescript-eslint/no-unused-vars
+32.16 12:10  Warning: 'MediaUploaderModal' is defined but never used.  @typescript-eslint/no-unused-vars
+32.16
+32.16 ./src/app/admin/articles/new/page.tsx
+32.16 24:20  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16
+32.16 ./src/app/admin/hikes/page.tsx
+32.16 11:16  Warning: 'CardContent' is defined but never used.  @typescript-eslint/no-unused-vars
+32.16 11:29  Warning: 'CardHeader' is defined but never used.  @typescript-eslint/no-unused-vars
+32.16 11:41  Warning: 'CardTitle' is defined but never used.  @typescript-eslint/no-unused-vars
+32.16 11:52  Warning: 'CardDescription' is defined but never used.  @typescript-eslint/no-unused-vars
+32.16
+32.16 ./src/app/admin/hikes/new/page.tsx
+32.16 51:20  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16 70:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16
+32.16 ./src/app/admin/add-participants/page.tsx
+32.16 30:41  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16 35:41  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16 91:20  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16
+32.16 ./src/app/admin/news/InitialNewsForm.tsx
+32.16 11:7  Warning: 'MAX_FILE_SIZE' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+32.16
+32.16 ./src/app/admin/news/edit/[id]/EditNewsForm.tsx
+32.16 16:9  Warning: 'router' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+32.16 36:20  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16
+32.16 ./src/app/admin/news/page.tsx
+32.16 11:16  Warning: 'CardHeader' is defined but never used.  @typescript-eslint/no-unused-vars
+32.16 11:28  Warning: 'CardTitle' is defined but never used.  @typescript-eslint/no-unused-vars
+32.16 11:39  Warning: 'CardDescription' is defined but never used.  @typescript-eslint/no-unused-vars
+32.16 11:56  Warning: 'CardContent' is defined but never used.  @typescript-eslint/no-unused-vars
+32.16
+32.16 ./src/app/admin/news/new/page.tsx
+32.16 24:20  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16
+32.16 ./src/app/admin/school-applications/ApplicationsClientPage.tsx
+32.16 15:56  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16 15:98  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16
+32.16 ./src/app/admin/school-applications/ApplicationsTable.tsx
+32.16 39:22  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16
+32.16 ./src/app/admin/participants/page.tsx
+32.16 24:45  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16
+32.16 ./src/app/admin/participants/new/page.tsx
+32.16 67:20  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16
+32.16 ./src/app/admin/link/page.tsx
+32.16 23:41  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16 28:42  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16 50:11  Warning: 'register' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+32.16 65:20  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16
+32.16 ./src/components/ImageCropperModal.tsx
+32.16 99:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+32.16
+32.16 ./src/components/AuthModal.tsx
+32.16 42:20  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16 94:20  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16
+32.16 ./src/components/MapboxMap.tsx
+32.16 11:12  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16 64:29  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16 79:39  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16
+32.16 ./src/components/AvatarUploader.tsx
+32.16 39:22  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16
+32.16 ./src/components/MediaInsertModal.tsx
+32.16 43:22  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16
+32.16 ./src/components/ContentCard.tsx
+32.16 6:10  Warning: 'Article' is defined but never used.  @typescript-eslint/no-unused-vars
+32.16 6:19  Warning: 'News' is defined but never used.  @typescript-eslint/no-unused-vars
+32.16 27:47  Warning: 'author' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+32.16
+32.16 ./src/providers/QueryProvider.tsx
+32.16 16:38  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16
+32.16 ./src/providers/AuthProvider.tsx
+32.16 3:37  Warning: 'useEffect' is defined but never used.  @typescript-eslint/no-unused-vars
+32.16 30:12  Warning: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+32.16
+32.16 ./src/lib/tiptap-iframe.ts
+32.16 6:20  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16
+32.16 ./src/lib/api.ts
+32.16 54:30  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32.16
+32.16 info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+32.18 error: script "build" exited with code 1
+------
+Dockerfile:32
+--------------------
+  30 |     ENV NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=$NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
+  31 |
+  32 | >>> RUN bun run build
+  33 |
+  34 |     # Production image, copy all the files and run next
+--------------------
+ERROR: failed to build: failed to solve: process "/bin/sh -c bun run build" did not complete successfully: exit code: 1
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/gfns4gc56ku5dlpyma17zl8zb
+PS D:\dev\turclub-site\frontend> 

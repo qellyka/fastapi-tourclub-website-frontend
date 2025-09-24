@@ -35,12 +35,14 @@ export interface Hike {
   slug: string;
   complexity: string;
   route: string;
-  geojson_data: object; // Для отображения на карте
+  geojson_data?: object; // Для отображения на карте
   start_date: string;
   end_date: string;
   region: string;
   description: string;
-  photos_archive: string;
+  photos_archive?: string;
+  report_file?: string;
+  gpx_file?: string;
 }
 
 export interface Pass {

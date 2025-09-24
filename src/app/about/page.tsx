@@ -23,7 +23,7 @@ function ParticipantCard({ participant }: { participant: User }) {
 
   // The content to be displayed over the image
   const overlayContent = (
-    <div className="w-full h-full bg-gradient-to-t from-black/70 via-black/30 to-transparent flex flex-col justify-end p-4 md:p-6">
+    <div className="w-full h-full rounded-lg bg-gradient-to-t from-black/70 via-black/30 to-transparent flex flex-col justify-end p-4 md:p-6">
       <h3 className="text-xl font-bold text-white">{participant.full_name}</h3>
       {participant.description && <p className="text-sm text-white/80 mt-1 max-w-prose">{participant.description}</p>}
     </div>
@@ -98,11 +98,24 @@ export default function AboutPage() {
           ) : error ? (
             <div className="text-center text-destructive bg-destructive/10 p-4 rounded-lg">Не удалось загрузить участников.</div>
           ) : participants && participants.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {participants.map((participant) => (
-                <ParticipantCard key={participant.username} participant={participant} />
-              ))}
-            </div>
+            (() => {
+              const uniqueParticipants = participants.filter(
+                (participant, index, self) =>
+                  index === self.findIndex((p) => (
+                    p.id ? p.id === participant.id : p.username === participant.username
+                  ))
+              );
+              return (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                  {uniqueParticipants.map((participant) => (
+                    <ParticipantCard
+                      key={participant.id || participant.username}
+                      participant={participant}
+                    />
+                  ))}
+                </div>
+              );
+            })()
           ) : (
             <div className="text-center py-16 border-2 border-dashed rounded-lg border-muted-foreground/30">
               <p className="text-lg font-medium text-muted-foreground">Информация об участниках клуба скоро появится</p>

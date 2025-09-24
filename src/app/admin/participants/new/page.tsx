@@ -17,7 +17,7 @@ import { UserSearchCombobox } from '@/components/UserSearchCombobox';
 
 const participantSchema = z.object({
   description: z.string().min(1, "Описание обязательно"),
-  avatar: z.instanceof(FileList).refine(files => files?.length === 1, "Аватар обязателен."),
+  avatar: z.any().refine(files => files?.length === 1, "Аватар обязателен."),
 });
 
 type ParticipantFormValues = z.infer<typeof participantSchema>;

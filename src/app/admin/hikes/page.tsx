@@ -102,7 +102,9 @@ export default function AdminHikesPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem disabled>Редактировать (скоро)</DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href={`/admin/hikes/edit/${hike.id}`}>Редактировать</Link>
+                    </DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-destructive"
                         onClick={() => {

@@ -93,5 +93,68 @@ export const getSchoolApplicationById = async (id: number): Promise<ApiResponse<
     return response.data;
 };
 
+// --- User API ---
+interface UserUpdatePayload {
+    first_name?: string;
+    last_name?: string;
+    middle_name?: string;
+}
+
+export const updateMe = async (data: UserUpdatePayload) => {
+    const response = await api.patch('/users/me/update', data);
+    return response.data;
+}
+
+// --- Hike API ---
+interface Hike {
+  id: number;
+  name: string;
+  complexity: string;
+  route: string;
+  start_date: string;
+  end_date: string;
+  region: string;
+  description: string;
+  photos_archive?: string;
+  report_file?: string;
+  gpx_file?: string;
+  // Add other fields as they become available from the backend
+}
+
+interface HikeUpdatePayload {
+  name?: string;
+  complexity?: string;
+  route?: string;
+  start_date?: string;
+  end_date?: string;
+  region?: string;
+  description?: string;
+  photos_archive?: string;
+}
+
+export const getHikeById = async (id: number): Promise<ApiResponse<Hike>> => {
+  const response = await api.get(`/archive/hikes/${id}`);
+  return response.data;
+};
+
+export const updateHike = async (id: number, data: HikeUpdatePayload, gpxFile?: File, reportFile?: File): Promise<ApiResponse<Hike>> => {
+  const formData = new FormData();
+  formData.append('update_data', JSON.stringify(data));
+
+  if (gpxFile) {
+    formData.append('gpx_file', gpxFile);
+  }
+  if (reportFile) {
+    formData.append('report_file', reportFile);
+  }
+
+  const response = await api.patch(`/archive/hikes/${id}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
 
 export default api;
