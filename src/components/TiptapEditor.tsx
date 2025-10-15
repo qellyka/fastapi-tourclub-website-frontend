@@ -54,6 +54,7 @@ const TiptapEditor = ({ value, onChange, bucketName }: TiptapEditorProps) => {
       <TiptapToolbar editor={editor} bucketName={bucketName} />
       <EditorContent editor={editor} />
     </div>
-  );};
+  );
+};
 
 export default TiptapEditor;

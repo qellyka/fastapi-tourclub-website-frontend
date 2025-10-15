@@ -5,11 +5,17 @@ import api from '@/lib/api';
 import { HikeParticipant } from '@/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
+import Link from 'next/link';
 
 async function fetchHikeParticipants(hikeId: number): Promise<{ detail: HikeParticipant[] }> {
+
   const { data } = await api.get(`/archive/hikes/${hikeId}/participants?hike_id=${hikeId}`);
+
   return data;
+
 }
+
+
 
 export default function HikeParticipants({ hikeId }: { hikeId: number }) {
   const { data: participants, isLoading, error } = useQuery<HikeParticipant[]>({
@@ -18,8 +24,8 @@ export default function HikeParticipants({ hikeId }: { hikeId: number }) {
     select: (data) => {
       if (!data) return [];
       // De-duplicate the array based on username to prevent key errors
-      const uniqueParticipants = data.filter((participant, index, self) => 
-        index === self.findIndex((p) => p.username === participant.username)
+      const uniqueParticipants = Array.from(
+        data.reduce((map, p) => map.set(p.username, p), new Map()).values()
       );
       return uniqueParticipants;
     },
@@ -38,19 +44,27 @@ export default function HikeParticipants({ hikeId }: { hikeId: number }) {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {participants.map((participant) => (
-        <div key={participant.username} className="border rounded-lg p-3 flex items-center space-x-3 bg-secondary/50">
-          <Avatar>
-            <AvatarImage src={participant.avatar} alt={participant.full_name} />
-            <AvatarFallback>{participant.full_name ? participant.full_name[0] : ''}</AvatarFallback>
-          </Avatar>
-          <div>
-            <p className="font-semibold text-sm">{participant.full_name}</p>
-            <p className="text-xs text-muted-foreground">@{participant.username}</p>
-            {participant.role && <p className="text-xs font-medium text-primary capitalize">{participant.role}</p>}
-          </div>
-        </div>
-      ))}
+      {participants.map((participant) => {
+        const content = (
+            <div className="border rounded-lg p-3 flex items-center space-x-3 bg-secondary/50 h-full hover:bg-secondary/80 transition-colors">
+              <Avatar>
+                <AvatarImage src={participant.avatar} alt={participant.full_name} />
+                <AvatarFallback>{participant.full_name ? participant.full_name[0] : ''}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-semibold text-sm">{participant.full_name}</p>
+                <p className="text-xs text-muted-foreground">@{participant.username}</p>
+                {participant.role && <p className="text-xs font-medium text-primary capitalize">{participant.role}</p>}
+              </div>
+            </div>
+        );
+
+        return (
+            <Link href={`/profile/${participant.username}`} key={participant.username}>
+                {content}
+            </Link>
+        );
+      })}
     </div>
   );
 }

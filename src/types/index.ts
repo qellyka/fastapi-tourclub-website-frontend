@@ -1,6 +1,6 @@
 
 export interface User {
-  id?: number;
+  id: number;
   username: string;
   email: string;
   first_name: string;
@@ -33,16 +33,27 @@ export interface Hike {
   id: number;
   name: string;
   slug: string;
+  tourism_type: string;
   complexity: string;
+  region: string;
   route: string;
-  geojson_data?: object; // Для отображения на карте
   start_date: string;
   end_date: string;
-  region: string;
   description: string;
+  participants_count: number;
+  duration_days: number;
+  distance_km: number;
+  difficulty_distribution: { [key: string]: number };
+  leader_id: number;
+  leader_fullname?: string;
+  leader_email?: string;
   photos_archive?: string;
-  report_file?: string;
-  gpx_file?: string;
+  report_s3_key?: string;
+  route_s3_key?: string;
+  geojson_data?: object;
+  status: string;
+  created_by: number;
+  updated_by: number;
 }
 
 export interface Pass {

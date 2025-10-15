@@ -1,7 +1,10 @@
-import EditNewsForm from './EditNewsForm';
+'use client';
 
-export default async function EditNewsPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+import EditNewsForm from './EditNewsForm';
+import { use } from 'react';
+
+export default function EditNewsPage({ params }: { params: { id: string } }) {
+  const { id } = use(params);
 
   return <EditNewsForm id={id} />;
 }

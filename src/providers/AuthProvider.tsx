@@ -46,8 +46,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     queryFn: fetchUser,
     enabled: typeof window !== 'undefined' && !['/login', '/register'].includes(pathname),
     refetchOnWindowFocus: false,
-    // Явно отключаем повторные попытки, чтобы избежать циклов
-    retry: false, 
   });
 
   const logout = useCallback(async () => {
