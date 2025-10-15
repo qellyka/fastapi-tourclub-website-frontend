@@ -87,12 +87,29 @@ export function TiptapToolbar({ editor, bucketName }: Props) {
         <Button type="button" size="sm" variant={editor.isActive('blockquote') ? 'default' : 'ghost'} onClick={() => editor.chain().focus().toggleBlockquote().run()}><Quote className="h-4 w-4" /></Button>
         
         {/* Media Buttons */}
-        <Button type="button" size="sm" variant="ghost" onClick={() => setModalState({ isOpen: true, mediaType: 'image' })}>
+        <Button type="button" size="sm" variant="ghost" onClick={() => setModalState({ isOpen: true, mediaType: 'image' }) }>
           <ImageIcon className="h-4 w-4" />
         </Button>
-        <Button type="button" size="sm" variant="ghost" onClick={() => setModalState({ isOpen: true, mediaType: 'video' })}>
+        <Button type="button" size="sm" variant="ghost" onClick={() => setModalState({ isOpen: true, mediaType: 'video' }) }>
           <Video className="h-4 w-4" />
         </Button>
+
+        {editor.isActive('image') && (
+          <>
+            <Button type="button" size="sm" variant="ghost" onClick={() => editor.chain().focus().updateAttributes('image', { width: '25%' }).run()}>
+              25%
+            </Button>
+            <Button type="button" size="sm" variant="ghost" onClick={() => editor.chain().focus().updateAttributes('image', { width: '50%' }).run()}>
+              50%
+            </Button>
+            <Button type="button" size="sm" variant="ghost" onClick={() => editor.chain().focus().updateAttributes('image', { width: '75%' }).run()}>
+              75%
+            </Button>
+            <Button type="button" size="sm" variant="ghost" onClick={() => editor.chain().focus().updateAttributes('image', { width: '100%' }).run()}>
+              100%
+            </Button>
+          </>
+        )}
       </div>
     </>
   );

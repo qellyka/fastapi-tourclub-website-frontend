@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import Link from 'next/link';
 
 async function fetchHikeById(id: string): Promise<{ detail: Hike }> {
   const { data } = await api.get(`/archive/hikes/${id}`);
@@ -41,23 +42,44 @@ export default function HikeDetailPage({ params }: { params: { id: string } }) {
     <main className="container mx-auto px-4 py-24 pt-28 md:pt-32">
       <h1 className="text-4xl lg:text-5xl font-bold tracking-tighter mb-8 text-center">{hike.name}</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-8">
-        <div className="lg:col-span-2">
+      <div className="flex flex-col lg:flex-row gap-8 mb-8">
+        <div className="lg:w-2/5">
             <Card className="h-full flex flex-col">
-                <CardHeader><CardTitle>Информация</CardTitle></CardHeader>
+                <CardHeader><CardTitle>Информация о походе</CardTitle></CardHeader>
                 <CardContent className="flex-grow space-y-2 text-lg">
+                    <p><strong>Тип:</strong> {hike.tourism_type}</p>
                     <p><strong>Регион:</strong> {hike.region}</p>
                     <p><strong>Сложность:</strong> {hike.complexity}</p>
                     <p><strong>Даты:</strong> {new Date(hike.start_date).toLocaleDateString()} - {new Date(hike.end_date).toLocaleDateString()}</p>
+                    <p><strong>Продолжительность:</strong> {hike.duration_days} дней</p>
+                    <p><strong>Протяженность:</strong> {hike.distance_km} км</p>
+                    <p><strong>Количество участников:</strong> {hike.participants_count}</p>
+                    {hike.leader_fullname && (
+                        <p><strong>Руководитель:</strong>{' '}
+                            <Link href={`/profile/${hike.leader_id}`} className="text-blue-500 hover:underline">
+                                {hike.leader_fullname}
+                            </Link>
+                        </p>
+                    )}
+                    {hike.difficulty_distribution && Object.keys(hike.difficulty_distribution).length > 0 && (
+                        <div>
+                            <p><strong>Препятствия:</strong></p>
+                            <ul className="list-disc list-inside pl-4">
+                                {Object.entries(hike.difficulty_distribution).map(([difficulty, count]) => (
+                                    <li key={difficulty}>{difficulty}: {count}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                 </CardContent>
                 <div className="p-6 border-t mt-auto space-y-3">
                     <Button asChild size="lg" className="w-full">
-                        <a href={`/hikes/${hike.id}/report`} target="_blank" rel="noopener noreferrer">
+                        <a href={`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/archive/hikes/${hike.id}/file/report`} target="_blank" rel="noopener noreferrer">
                             <Download className="mr-2 h-4 w-4" /> Скачать PDF отчет
                         </a>
                     </Button>
                     <Button asChild size="lg" variant="secondary" className="w-full">
-                        <a href={`/hikes/${hike.id}/route`} target="_blank" rel="noopener noreferrer">
+                        <a href={`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/archive/hikes/${hike.id}/file/route`} target="_blank" rel="noopener noreferrer">
                             <Download className="mr-2 h-4 w-4" /> Скачать GPX маршрут
                         </a>
                     </Button>
@@ -72,7 +94,7 @@ export default function HikeDetailPage({ params }: { params: { id: string } }) {
             </Card>
         </div>
 
-        <div className="lg:col-span-3 h-96 lg:h-[500px] rounded-lg overflow-hidden border bg-muted">
+        <div className="lg:w-3/5 min-h-[500px] rounded-lg overflow-hidden border bg-muted">
           {hike.geojson_data && <MapboxMap geojson={hike.geojson_data} />}
         </div>
       </div>

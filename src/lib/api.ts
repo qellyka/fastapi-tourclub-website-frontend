@@ -19,16 +19,7 @@ declare module 'axios' {
   }
 }
 
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+
 
 api.interceptors.response.use(
   (response) => response,
@@ -44,8 +35,7 @@ api.interceptors.response.use(
 
       try {
         console.log('Access token expired or missing. Attempting to refresh...');
-        const { data } = await api.get('/auth/refresh');
-        localStorage.setItem('accessToken', data.access_token);
+        await api.get('/auth/refresh', { withCredentials: true });
         console.log('Token refreshed successfully.');
 
         // Повторяем оригинальный запрос с новым токеном
@@ -54,8 +44,7 @@ api.interceptors.response.use(
       } catch (refreshError: any) {
         console.error('Unable to refresh token. Logging out.', refreshError.response?.data);
         
-        // Если обновить токен не удалось, очищаем localStorage и вызываем logout на бэкенде
-        localStorage.removeItem('accessToken');
+        // Если обновить токен не удалось, вызываем logout на бэкенде
         api.post('/auth/logout').catch(err => console.error('Logout call after refresh failure also failed:', err));
         
         return Promise.reject(refreshError);
@@ -98,6 +87,8 @@ interface UserUpdatePayload {
     first_name?: string;
     last_name?: string;
     middle_name?: string;
+    phone_number?: string;
+    description?: string;
 }
 
 export const updateMe = async (data: UserUpdatePayload) => {
