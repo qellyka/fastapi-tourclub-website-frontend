@@ -10,12 +10,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && (!user || !user?.roles?.includes('admin'))) {
+    if (!isLoading && (!user || (!user?.roles?.includes('admin') && !user?.roles?.includes('moderator')))) {
       router.push('/');
     }
   }, [user, isLoading, router]);
 
-  if (isLoading || !user || !user?.roles?.includes('admin')) {
+  if (isLoading || !user || (!user?.roles?.includes('admin') && !user?.roles?.includes('moderator'))) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
         <div className="text-xl font-semibold text-foreground">Загрузка...</div>

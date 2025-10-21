@@ -1,4 +1,6 @@
 
+export type UserRole = 'admin' | 'moderator' | 'user';
+
 export interface User {
   id: number;
   username: string;
@@ -12,7 +14,25 @@ export interface User {
   avatar_club?: string;
   description?: string;
   roles: string[];
+  is_banned?: boolean;
+  is_active?: boolean;
+  is_superuser?: boolean;
+  is_verified?: boolean;
+  phone_number?: string;
+  telegram_username?: string;
+  vk_username?: string;
 }
+
+export interface UserAdminUpdate {
+  first_name?: string;
+  last_name?: string;
+  middle_name?: string;
+  description?: string;
+  phone_number?: string;
+  roles?: string[];
+  email?: string;
+}
+
 
 export interface HikeParticipant {
   id?: number;
@@ -65,6 +85,7 @@ export interface Pass {
   height: number;
   description: string;
   photos?: string[];
+  status: ContentStatus;
 }
 
 export interface Article {
@@ -75,6 +96,7 @@ export interface Article {
   content_html?: string; // Tiptap HTML
   cover_s3_url: string;
   author: string;
+  status: ContentStatus;
 }
 
 export interface News {
@@ -85,6 +107,49 @@ export interface News {
   content_json?: string;
   content_html?: string;
   cover_s3_url: string;
+  status: ContentStatus;
+}
+
+export const contentStatuses = ['archived', 'published', 'review', 'draft'] as const;
+export type ContentStatus = typeof contentStatuses[number];
+
+export interface ArticleUpdate {
+  title?: string;
+  content_json?: string;
+  content_html?: string;
+  cover_s3_url?: string;
+  status?: ContentStatus;
+}
+
+export interface NewsUpdate {
+  title?: string;
+  summary?: string;
+  content_json?: string;
+  content_html?: string;
+  cover_s3_url?: string;
+  status?: ContentStatus;
+}
+
+export interface PassUpdate {
+  name?: string;
+  region?: string;
+  complexity?: string;
+  height?: number;
+  description?: string;
+  photos?: string[];
+  status?: ContentStatus;
+}
+
+export interface HikeUpdate {
+  name?: string;
+  complexity?: string;
+  route?: string;
+  start_date?: string;
+  end_date?: string;
+  region?: string;
+  description?: string;
+  photos_archive?: string;
+  status?: ContentStatus;
 }
 
 // --- School Applications ---

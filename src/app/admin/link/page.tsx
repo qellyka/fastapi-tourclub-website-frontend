@@ -13,6 +13,8 @@ import { toast } from '@/hooks/use-toast';
 import { Hike, Pass } from '@/types';
 import { useState } from 'react';
 
+import { withAdminAuth } from '@/components/admin/withAdminAuth';
+
 const linkSchema = z.object({
   hike_id: z.string().min(1, "Поход обязателен"),
   pass_id: z.string().min(1, "Перевал обязателен"),
@@ -30,7 +32,7 @@ async function fetchAllPasses(): Promise<any> {
   return data;
 }
 
-export default function LinkHikePassPage() {
+function LinkHikePassPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
@@ -118,3 +120,5 @@ export default function LinkHikePassPage() {
     </div>
   );
 }
+
+export default withAdminAuth(LinkHikePassPage);

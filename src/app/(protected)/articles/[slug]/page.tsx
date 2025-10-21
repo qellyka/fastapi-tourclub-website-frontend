@@ -6,6 +6,8 @@ import { Article } from '@/types';
 import RichTextRenderer from '@/components/RichTextRenderer';
 import { use } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/providers/AuthProvider';
+import { notFound } from 'next/navigation';
 
 async function fetchArticleBySlug(slug: string): Promise<{ detail: Article }> {
   const { data } = await api.get(`/articles/${slug}`);
@@ -14,6 +16,7 @@ async function fetchArticleBySlug(slug: string): Promise<{ detail: Article }> {
 
 export default function ArticleDetailPage({ params }: { params: { slug: string } }) {
   const { slug } = use(params);
+  const { user } = useAuth();
   const { data: article, isLoading, error } = useQuery<Article>({
     queryKey: ['article', slug],
     queryFn: () => fetchArticleBySlug(slug),
@@ -33,7 +36,15 @@ export default function ArticleDetailPage({ params }: { params: { slug: string }
         </div>
     </div>
   );
-  if (error || !article) return <div className="container mx-auto px-4 py-24 text-center text-destructive">Статья не найдена.</div>;
+  if (error || !article) return notFound();
+
+  const isPublished = article.status?.toLowerCase() === 'published';
+  const isAdmin = user?.roles?.includes('admin');
+  const isModerator = user?.roles?.includes('moderator');
+
+  if (!isPublished && !isAdmin && !isModerator) {
+    return notFound();
+  }
 
   return (
     <div className="container mx-auto px-4 py-24 pt-28 md:pt-32 max-w-4xl">

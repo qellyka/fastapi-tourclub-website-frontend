@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/providers/AuthProvider';
+import { notFound } from 'next/navigation';
 
 async function fetchPassById(id: string): Promise<{ detail: Pass }> {
   const { data } = await api.get(`/archive/passes/${id}`);
@@ -35,6 +37,7 @@ async function fetchHikesForPass(id: string): Promise<{ detail: Hike[] }> {
 
 export default function PassDetailPage({ params }: { params: { id: string } }) {
   const { id } = use(params);
+  const { user } = useAuth();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const { data: pass, isLoading: isLoadingPass, error: errorPass } = useQuery<Pass>({
@@ -71,8 +74,15 @@ export default function PassDetailPage({ params }: { params: { id: string } }) {
         <Skeleton className="h-64 w-full" />
     </div>
   );
-  if (errorPass) return <div className="container mx-auto px-4 py-24 text-center">Перевал не найден.</div>;
-  if (!pass) return null;
+  if (errorPass || !pass) return notFound();
+
+  const isPublished = pass.status?.toLowerCase() === 'published';
+  const isAdmin = user?.roles?.includes('admin');
+  const isModerator = user?.roles?.includes('moderator');
+
+  if (!isPublished && !isAdmin && !isModerator) {
+    return notFound();
+  }
 
   return (
     <main className="container mx-auto px-4 py-24 pt-28 md:pt-32">

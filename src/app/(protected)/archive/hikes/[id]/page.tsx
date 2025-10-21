@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
+import { useAuth } from '@/providers/AuthProvider';
+import { notFound } from 'next/navigation';
 
 async function fetchHikeById(id: string): Promise<{ detail: Hike }> {
   const { data } = await api.get(`/archive/hikes/${id}`);
@@ -19,6 +21,7 @@ async function fetchHikeById(id: string): Promise<{ detail: Hike }> {
 
 export default function HikeDetailPage({ params }: { params: { id: string } }) {
   const { id } = use(params);
+  const { user } = useAuth();
   const { data: hike, isLoading, error } = useQuery<Hike>({
     queryKey: ['hike', id],
     queryFn: () => fetchHikeById(id),
@@ -35,8 +38,15 @@ export default function HikeDetailPage({ params }: { params: { id: string } }) {
         <Skeleton className="h-64 w-full" />
     </div>
   );
-  if (error) return <div className="container mx-auto px-4 py-24 text-center text-destructive">Поход не найден.</div>;
-  if (!hike) return null;
+  if (error || !hike) return notFound();
+
+  const isPublished = hike.status?.toLowerCase() === 'published';
+  const isAdmin = user?.roles?.includes('admin');
+  const isModerator = user?.roles?.includes('moderator');
+
+  if (!isPublished && !isAdmin && !isModerator) {
+    return notFound();
+  }
 
   return (
     <main className="container mx-auto px-4 py-24 pt-28 md:pt-32">

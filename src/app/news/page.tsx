@@ -1,15 +1,10 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import api from '@/lib/api';
+import { getAllNews } from '@/lib/api';
 import { News } from '@/types';
 import { ContentCard } from '@/components/ContentCard';
 import { Skeleton } from '@/components/ui/skeleton';
-
-async function fetchNews(): Promise<{ detail: News[] }> {
-  const { data } = await api.get('/news');
-  return data;
-}
 
 const NewsSkeleton = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -39,8 +34,8 @@ const NewsSkeleton = () => (
 
 export default function NewsPage() {
   const { data: news, isLoading, error } = useQuery<News[]>({ 
-    queryKey: ['news'], 
-    queryFn: async () => (await fetchNews()).detail,
+    queryKey: ['news', 'published'], 
+    queryFn: async () => (await getAllNews('published')).detail,
   });
 
   return (

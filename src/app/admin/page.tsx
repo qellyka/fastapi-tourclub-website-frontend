@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useAuth } from "@/providers/AuthProvider";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Users, Newspaper, Mountain, Map, FileText, Link as LinkIcon, Waves, BookOpen } from 'lucide-react';
 import Link from "next/link";
@@ -45,10 +46,24 @@ const adminSections = [
 ];
 
 export default function AdminDashboardPage() {
+  const { user } = useAuth();
   const { data: stats, isLoading: isLoadingStats, error: errorStats } = useQuery<Statistics>({
     queryKey: ['statistics'],
     queryFn: fetchStatistics,
   });
+
+  const isModerator = user?.roles?.includes('moderator') && !user?.roles?.includes('admin');
+
+  const availableSections = isModerator
+? adminSections.filter(section => [
+        '/admin/articles', 
+        '/admin/news', 
+        '/admin/hikes', 
+        '/admin/passes',
+        '/admin/add-participants',
+        '/admin/link'
+      ].includes(section.href))
+    : adminSections;
 
   return (
     <div className="space-y-8">
@@ -58,31 +73,33 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Statistics Section */}
-      <div className="space-y-4">
-        <h2 className="text-2xl font-bold">Общая статистика</h2>
-        {isLoadingStats && (
+      {!isModerator && (
+        <div className="space-y-4">
+          <h2 className="text-2xl font-bold">Общая статистика</h2>
+          {isLoadingStats && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <Skeleton className="h-24 w-full" />
+                  <Skeleton className="h-24 w-full" />
+                  <Skeleton className="h-24 w-full" />
+                  <Skeleton className="h-24 w-full" />
+              </div>
+          )}
+          {errorStats && <div className="text-center text-destructive bg-destructive/10 p-4 rounded-lg">Не удалось загрузить статистику.</div>}
+          {stats && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Skeleton className="h-24 w-full" />
-                <Skeleton className="h-24 w-full" />
-                <Skeleton className="h-24 w-full" />
-                <Skeleton className="h-24 w-full" />
+              <StatisticsCard title="Походы" value={stats.totalHikes} icon={Mountain} />
+              <StatisticsCard title="Перевалы" value={stats.totalPasses} icon={Waves} />
+              <StatisticsCard title="Статьи" value={stats.totalArticles} icon={BookOpen} />
+              <StatisticsCard title="Пользователи" value={stats.totalUsers} icon={Users} />
             </div>
-        )}
-        {errorStats && <div className="text-center text-destructive bg-destructive/10 p-4 rounded-lg">Не удалось загрузить статистику.</div>}
-        {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatisticsCard title="Походы" value={stats.totalHikes} icon={Mountain} />
-            <StatisticsCard title="Перевалы" value={stats.totalPasses} icon={Waves} />
-            <StatisticsCard title="Статьи" value={stats.totalArticles} icon={BookOpen} />
-            <StatisticsCard title="Пользователи" value={stats.totalUsers} icon={Users} />
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
       
       <div className="space-y-4">
         <h2 className="text-2xl font-bold">Разделы</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {adminSections.map((section) => (
+            {availableSections.map((section) => (
             <Link href={section.href} key={section.title} className="no-underline">
                 <Card className="h-full hover:border-primary hover:shadow-lg transition-all duration-200 ease-in-out transform hover:-translate-y-1">
                 <CardHeader>

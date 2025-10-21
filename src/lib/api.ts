@@ -2,10 +2,20 @@ import axios from 'axios';
 import type { AxiosRequestConfig } from 'axios';
 import {
   ApiResponse,
+  Article,
+  ArticleUpdate,
+  ContentStatus,
+  HikeUpdate,
+  News,
+  NewsUpdate,
+  Pass,
+  PassUpdate,
   SchoolApplication,
   SchoolApplicationAdminItem,
   SchoolApplicationCreate,
-  SchoolApplicationUpdateAdmin
+  SchoolApplicationUpdateAdmin,
+  User,
+  UserAdminUpdate
 } from "@/types";
 
 const api = axios.create({
@@ -83,6 +93,17 @@ export const getSchoolApplicationById = async (id: number): Promise<ApiResponse<
 };
 
 // --- User API ---
+
+export const getUserById = async (id: number): Promise<ApiResponse<User>> => {
+    const response = await api.get(`/users/${id}`);
+    return response.data;
+};
+
+export const updateUser = async (id: number, data: UserAdminUpdate): Promise<ApiResponse<User>> => {
+    const response = await api.patch(`/users/${id}/update`, data);
+    return response.data;
+};
+
 interface UserUpdatePayload {
     first_name?: string;
     last_name?: string;
@@ -95,6 +116,70 @@ export const updateMe = async (data: UserUpdatePayload) => {
     const response = await api.patch('/users/me/update', data);
     return response.data;
 }
+
+// --- Content API ---
+
+export const getAllArticles = async (status?: ContentStatus): Promise<ApiResponse<Article[]>> => {
+    const response = await api.get('/articles', { params: { status } });
+    return response.data;
+};
+
+export const getAllNews = async (status?: ContentStatus): Promise<ApiResponse<News[]>> => {
+    const response = await api.get('/news', { params: { status } });
+    return response.data;
+};
+
+export const getAllHikes = async (status?: ContentStatus): Promise<ApiResponse<Hike[]>> => {
+    const response = await api.get('/archive/hikes', { params: { status } });
+    return response.data;
+};
+
+export const getAllPasses = async (status?: ContentStatus): Promise<ApiResponse<Pass[]>> => {
+    const response = await api.get('/archive/passes', { params: { status } });
+    return response.data;
+};
+
+export const getArticleById = async (id: number): Promise<ApiResponse<Article>> => {
+    const response = await api.get(`/articles/${id}`);
+    return response.data;
+};
+
+export const updateArticle = async (id: number, data: ArticleUpdate): Promise<ApiResponse<Article>> => {
+    const updatedData: any = { ...data };
+    if (data.status) {
+        updatedData.status = data.status.toUpperCase();
+    }
+    const response = await api.patch(`/articles/${id}`, updatedData);
+    return response.data;
+};
+
+export const getNewsById = async (id: number): Promise<ApiResponse<News>> => {
+    const response = await api.get(`/news/${id}`);
+    return response.data;
+};
+
+export const updateNews = async (id: number, data: NewsUpdate): Promise<ApiResponse<News>> => {
+    const updatedData: any = { ...data };
+    if (data.status) {
+        updatedData.status = data.status.toUpperCase();
+    }
+    const response = await api.patch(`/news/${id}`, updatedData);
+    return response.data;
+};
+
+export const getPassById = async (id: number): Promise<ApiResponse<Pass>> => {
+    const response = await api.get(`/archive/passes/${id}`);
+    return response.data;
+};
+
+export const updatePass = async (id: number, data: PassUpdate): Promise<ApiResponse<Pass>> => {
+    const updatedData: any = { ...data };
+    if (data.status) {
+        updatedData.status = data.status.toUpperCase();
+    }
+    const response = await api.patch(`/archive/passes/${id}`, updatedData);
+    return response.data;
+};
 
 // --- Hike API ---
 interface Hike {

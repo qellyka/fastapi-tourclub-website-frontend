@@ -9,7 +9,9 @@ import ApplicationsTable from "./ApplicationsTable";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SchoolApplicationAdminItem, SchoolApplicationStatus } from "@/types";
 
-export default function ApplicationsClientPage() {
+import { withAdminAuth } from '@/components/admin/withAdminAuth';
+
+function ApplicationsClientPage() {
   const [status, setStatus] = useState<SchoolApplicationStatus>("pending");
 
   const { data, isLoading, isError, error } = useQuery<any, Error, SchoolApplicationAdminItem[], any>({
@@ -46,3 +48,5 @@ export default function ApplicationsClientPage() {
     </Tabs>
   );
 }
+
+export default withAdminAuth(ApplicationsClientPage);

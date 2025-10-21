@@ -7,6 +7,8 @@ import RichTextRenderer from '@/components/RichTextRenderer';
 import { use } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
+import { useAuth } from '@/providers/AuthProvider';
+import { notFound } from 'next/navigation';
 
 async function fetchNewsBySlug(slug: string): Promise<{ detail: News }> {
   const { data } = await api.get(`/news/${slug}`);
@@ -15,6 +17,7 @@ async function fetchNewsBySlug(slug: string): Promise<{ detail: News }> {
 
 export default function NewsDetailPage({ params }: { params: { slug: string } }) {
   const { slug } = use(params);
+  const { user } = useAuth();
   const { data: newsItem, isLoading, error } = useQuery<News>({
     queryKey: ['news', slug],
     queryFn: async () => (await fetchNewsBySlug(slug)).detail,
@@ -32,7 +35,15 @@ export default function NewsDetailPage({ params }: { params: { slug: string } })
         </div>
     </div>
   );
-  if (error || !newsItem) return <div className="container mx-auto px-4 py-24 text-center text-destructive">Новость не найдена.</div>;
+  if (error || !newsItem) return notFound();
+
+  const isPublished = newsItem.status?.toLowerCase() === 'published';
+  const isAdmin = user?.roles?.includes('admin');
+  const isModerator = user?.roles?.includes('moderator');
+
+  if (!isPublished && !isAdmin && !isModerator) {
+    return notFound();
+  }
 
   return (
     <div className="container mx-auto px-4 py-24 pt-28 md:pt-32 max-w-4xl">

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -23,6 +22,8 @@ import { DotsHorizontalIcon } from '@radix-ui/react-icons';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
+import { withAdminAuth } from '@/components/admin/withAdminAuth';
 
 async function fetchUsers(): Promise<User[]> {
   const { data } = await api.get<ApiResponse<User[]>>('/users');
@@ -61,7 +62,7 @@ const TableSkeleton = () => (
     </div>
 )
 
-export default function AdminUsersPage() {
+function AdminUsersPage() {
   const queryClient = useQueryClient();
   const { data: users, isLoading, error } = useQuery({
     queryKey: ['admin-users'],
@@ -70,6 +71,20 @@ export default function AdminUsersPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (userId: number) => api.delete(`/users/${userId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    },
+  });
+
+  const banMutation = useMutation({
+    mutationFn: (userId: number) => api.post(`/users/${userId}/ban`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    },
+  });
+
+  const unbanMutation = useMutation({
+    mutationFn: (userId: number) => api.post(`/users/${userId}/unban`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     },
@@ -103,10 +118,11 @@ export default function AdminUsersPage() {
                 <TableCell className="font-medium">{user.full_name}</TableCell>
                 <TableCell className="text-muted-foreground">{user.username}</TableCell>
                 <TableCell>{user.email}</TableCell>
-                <TableCell>
+                <TableCell className="space-x-2">
                     <Badge variant={user.is_activated ? 'default' : 'secondary'}>
                         {user.is_activated ? 'Активен' : 'Не активен'}
                     </Badge>
+                    {user.is_banned && <Badge variant="destructive">Забанен</Badge>}
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>
@@ -117,6 +133,18 @@ export default function AdminUsersPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <Link href={`/admin/users/${user.id}/edit`}>Редактировать</Link>
+                      </DropdownMenuItem>
+                      {!user.is_banned ? (
+                        <DropdownMenuItem onClick={() => banMutation.mutate(user.id!)}>
+                          Забанить
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem onClick={() => unbanMutation.mutate(user.id!)}>
+                          Разбанить
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem
                         className="text-destructive"
                         onClick={() => {
@@ -138,3 +166,5 @@ export default function AdminUsersPage() {
     </div>
   );
 }
+
+export default withAdminAuth(AdminUsersPage);

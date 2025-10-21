@@ -11,9 +11,10 @@ interface TiptapEditorProps {
   value: string; // Still takes HTML as initial value
   onChange: (content: { html: string, json: JSONContent }) => void; // Changed to object
   bucketName: 'tkirbis-news-media' | 'tkirbis-article-media';
+  isEditable?: boolean;
 }
 
-const TiptapEditor = ({ value, onChange, bucketName }: TiptapEditorProps) => {
+const TiptapEditor = ({ value, onChange, bucketName, isEditable = true }: TiptapEditorProps) => {
   const [editor, setEditor] = useState<Editor | null>(null);
 
   // Effect to initialize and destroy the editor
@@ -21,6 +22,7 @@ const TiptapEditor = ({ value, onChange, bucketName }: TiptapEditorProps) => {
     const tiptapEditor = new Editor({
       extensions: [StarterKit, Image, Iframe],
       content: typeof value === 'string' ? value : '',
+      editable: isEditable,
       editorProps: {
         attributes: {
           class: 'prose dark:prose-invert max-w-none focus:outline-none border rounded-md p-4 min-h-[300px]',
@@ -38,7 +40,6 @@ const TiptapEditor = ({ value, onChange, bucketName }: TiptapEditorProps) => {
     return () => {
       tiptapEditor.destroy();
     };
-    // We want this to run only once on mount, so we pass an empty dependency array.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -48,6 +49,12 @@ const TiptapEditor = ({ value, onChange, bucketName }: TiptapEditorProps) => {
       editor.commands.setContent(value, false);
     }
   }, [value, editor]);
+
+  useEffect(() => {
+    if (editor) {
+      editor.setEditable(isEditable);
+    }
+  }, [isEditable, editor]);
 
   return (
     <div className="flex flex-col gap-2">

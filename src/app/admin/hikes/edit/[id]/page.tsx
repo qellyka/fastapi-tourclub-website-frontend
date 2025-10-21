@@ -13,10 +13,11 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { useEffect } from 'react';
-import { Hike, User } from '@/types';
+import { useEffect, useMemo } from 'react';
+import { ContentStatus, Hike, User, UserRole } from '@/types';
 import { UserSearchCombobox } from '@/components/UserSearchCombobox';
 import { PlusCircle, XCircle } from 'lucide-react';
+import { useAuth } from '@/providers/AuthProvider';
 
 const hikeFormSchema = z.object({
   name: z.string().min(1, "Название обязательно"),
@@ -58,6 +59,7 @@ export default function EditHikePage() {
   const hikeId = params.id as string;
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const { data: hikeData, isLoading: isHikeLoading, isError: isHikeError } = useQuery<Hike>({
     queryKey: ['hike', hikeId],
@@ -134,6 +136,18 @@ export default function EditHikePage() {
     },
   });
 
+  const statusUpdateMutation = useMutation({
+    mutationFn: (status: ContentStatus) => api.patch(`/archive/hikes/${hikeId}`, { update_data: JSON.stringify({ status }) }),
+    onSuccess: (data) => {
+      queryClient.setQueryData(['hike', hikeId], data);
+      queryClient.invalidateQueries({ queryKey: ['admin-hikes'] });
+      toast({ title: "Статус похода успешно обновлен" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Ошибка при обновлении статуса", description: error.message, variant: "destructive" });
+    },
+  });
+
   const onSubmit = (data: HikeFormValues) => {
     const formData = new FormData();
     const changedFields = form.formState.dirtyFields;
@@ -166,11 +180,89 @@ export default function EditHikePage() {
         formData.append('update_data', JSON.stringify(jsonData));
     }
 
-    // Only mutate if there is something to send
     if (formData.has('update_data') || formData.has('report_file') || formData.has('gpx_file')) {
         mutation.mutate(formData);
     } else {
         toast({ title: 'Нет изменений', description: 'Вы не внесли никаких изменений.' });
+    }
+  };
+
+  const handleStatusChange = (status: ContentStatus) => {
+    statusUpdateMutation.mutate(status);
+  };
+
+  const userRole = user?.roles.includes('admin') ? 'admin' : user?.roles.includes('moderator') ? 'moderator' : 'user';
+
+  const isEditable = useMemo(() => {
+const status = hikeData.status?.toLowerCase() as ContentStatus;
+    const isAdmin = user.roles.includes('admin');
+    const isModerator = user.roles.includes('moderator');
+
+    if (status === 'draft' && (isAdmin || isModerator)) {
+      return true;
+    }
+    if (status === 'review' && isAdmin) {
+      return true;
+    }
+    return false;
+  }, [hikeData, user]);
+
+  const renderStatusButtons = () => {
+    if (!user || !hikeData) return null;
+
+    const isAdmin = user.roles.includes('admin');
+    const isModerator = user.roles.includes('moderator');
+    const status = hikeData.status as ContentStatus;
+
+    switch (status?.toLowerCase()) {
+      case 'published':
+        return isAdmin ? (
+          <div className="flex items-center space-x-2">
+            <Button type="button" onClick={() => handleStatusChange('draft')} disabled={statusUpdateMutation.isPending}>
+              Отправить на редактирование
+            </Button>
+            <Button type="button" onClick={() => handleStatusChange('archived')} disabled={statusUpdateMutation.isPending} variant="secondary">
+              Архивировать
+            </Button>
+          </div>
+        ) : null;
+      case 'draft':
+        return (isAdmin || isModerator) ? (
+          <div className="flex items-center space-x-2">
+            <Button type="button" onClick={() => handleStatusChange('review')} disabled={statusUpdateMutation.isPending}>
+              Отправить на проверку
+            </Button>
+            {isAdmin && (
+                <Button type="button" onClick={() => handleStatusChange('archived')} disabled={statusUpdateMutation.isPending} variant="secondary">
+                    Архивировать
+                </Button>
+            )}
+          </div>
+        ) : null;
+      case 'review':
+        return isAdmin ? (
+          <div className="flex items-center space-x-2">
+            <Button type="button" onClick={() => handleStatusChange('published')} disabled={statusUpdateMutation.isPending} variant="success">
+              Опубликовать
+            </Button>
+            <Button type="button" onClick={() => handleStatusChange('draft')} disabled={statusUpdateMutation.isPending} variant="destructive">
+              Отклонить
+            </Button>
+            <Button type="button" onClick={() => handleStatusChange('archived')} disabled={statusUpdateMutation.isPending} variant="secondary">
+                Архивировать
+            </Button>
+          </div>
+        ) : null;
+      case 'archived':
+        return isAdmin ? (
+          <div className="flex items-center space-x-2">
+            <Button type="button" onClick={() => handleStatusChange('draft')} disabled={statusUpdateMutation.isPending}>
+              Разархивировать
+            </Button>
+          </div>
+        ) : null;
+      default:
+        return null;
     }
   };
 
@@ -189,206 +281,212 @@ export default function EditHikePage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <fieldset disabled={!isEditable} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                            control={form.control}
+                            name="name"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Название</FormLabel>
+                                    <FormControl><Input {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="tourism_type"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Тип туризма</FormLabel>
+                                    <FormControl><Input {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                            control={form.control}
+                            name="complexity"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Сложность</FormLabel>
+                                    <FormControl><Input {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="region"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Регион</FormLabel>
+                                    <FormControl><Input {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
                     <FormField
                         control={form.control}
-                        name="name"
+                        name="route"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Название</FormLabel>
-                                <FormControl><Input {...field} /></FormControl>
+                                <FormLabel>Нитка маршрута</FormLabel>
+                                <FormControl><Textarea {...field} /></FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                            control={form.control}
+                            name="start_date"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Дата начала</FormLabel>
+                                    <FormControl><Input type="date" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="end_date"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Дата окончания</FormLabel>
+                                    <FormControl><Input type="date" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
                     <FormField
                         control={form.control}
-                        name="tourism_type"
+                        name="description"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Тип туризма</FormLabel>
-                                <FormControl><Input {...field} /></FormControl>
+                                <FormLabel>Описание</FormLabel>
+                                <FormControl><Textarea {...field} /></FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                        control={form.control}
-                        name="complexity"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Сложность</FormLabel>
-                                <FormControl><Input {...field} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="region"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Регион</FormLabel>
-                                <FormControl><Input {...field} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
-                <FormField
-                    control={form.control}
-                    name="route"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Нитка маршрута</FormLabel>
-                            <FormControl><Textarea {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                        control={form.control}
-                        name="start_date"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Дата начала</FormLabel>
-                                <FormControl><Input type="date" {...field} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="end_date"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Дата окончания</FormLabel>
-                                <FormControl><Input type="date" {...field} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
-                <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Описание</FormLabel>
-                            <FormControl><Textarea {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <FormField
-                        control={form.control}
-                        name="participants_count"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Кол-во участников</FormLabel>
-                                <FormControl><Input type="number" {...field} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="duration_days"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Продолжительность (дни)</FormLabel>
-                                <FormControl><Input type="number" {...field} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="distance_km"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Протяженность (км)</FormLabel>
-                                <FormControl><Input type="number" step="0.1" {...field} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
-                
-                <div className="flex flex-col">
-                    <Label>Распределение сложностей</Label>
-                    {fields.map((item, index) => (
-                        <div key={item.id} className="flex items-center gap-2 mt-2">
-                            <Input {...form.register(`difficulty_distribution.${index}.name`)} placeholder="Категория (1А, 2Б...)" className="w-1/2" />
-                            <Input type="number" {...form.register(`difficulty_distribution.${index}.count`)} placeholder="Количество" className="w-1/2" />
-                            <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}><XCircle className="h-5 w-5 text-destructive" /></Button>
-                        </div>
-                    ))}
-                    <Button type="button" variant="outline" size="sm" className="mt-2 w-fit" onClick={() => append({ name: '', count: 1 })}><PlusCircle className="h-4 w-4 mr-2"/>Добавить препятствие</Button>
-                </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <FormField
+                            control={form.control}
+                            name="participants_count"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Кол-во участников</FormLabel>
+                                    <FormControl><Input type="number" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="duration_days"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Продолжительность (дни)</FormLabel>
+                                    <FormControl><Input type="number" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="distance_km"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Протяженность (км)</FormLabel>
+                                    <FormControl><Input type="number" step="0.1" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                    
+                    <div className="flex flex-col">
+                        <Label>Распределение сложностей</Label>
+                        {fields.map((item, index) => (
+                            <div key={item.id} className="flex items-center gap-2 mt-2">
+                                <Input {...form.register(`difficulty_distribution.${index}.name`)} placeholder="Категория (1А, 2Б...)" className="w-1/2" />
+                                <Input type="number" {...form.register(`difficulty_distribution.${index}.count`)} placeholder="Количество" className="w-1/2" />
+                                <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}><XCircle className="h-5 w-5 text-destructive" /></Button>
+                            </div>
+                        ))}
+                        <Button type="button" variant="outline" size="sm" className="mt-2 w-fit" onClick={() => append({ name: '', count: 1 })}><PlusCircle className="h-4 w-4 mr-2"/>Добавить препятствие</Button>
+                    </div>
 
-                <FormField
-                    control={form.control}
-                    name="leader_id"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                            <FormLabel>Руководитель</FormLabel>
-                            <UserSearchCombobox
-                                users={usersData || []}
-                                value={field.value}
-                                onSelect={field.onChange}
-                                placeholder={usersLoading ? "Загрузка..." : "Выберите руководителя"}
-                            />
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                    <FormField
+                        control={form.control}
+                        name="leader_id"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                                <FormLabel>Руководитель</FormLabel>
+                                <UserSearchCombobox
+                                    users={usersData || []}
+                                    value={field.value}
+                                    onSelect={field.onChange}
+                                    placeholder={usersLoading ? "Загрузка..." : "Выберите руководителя"}
+                                />
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
-                <FormField
-                    control={form.control}
-                    name="report_file"
-                    render={({ field: { value, onChange, ...fieldProps } }) => (
-                        <FormItem>
-                            <FormLabel>Новый файл отчета (PDF)</FormLabel>
-                            <FormControl><Input type="file" accept=".pdf" onChange={e => onChange(e.target.files)} {...fieldProps} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
+                    <FormField
+                        control={form.control}
+                        name="report_file"
+                        render={({ field: { value, onChange, ...fieldProps } }) => (
+                            <FormItem>
+                                <FormLabel>Новый файл отчета (PDF)</FormLabel>
+                                <FormControl><Input type="file" accept=".pdf" onChange={e => onChange(e.target.files)} {...fieldProps} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="gpx_file"
+                        render={({ field: { value, onChange, ...fieldProps } }) => (
+                            <FormItem>
+                                <FormLabel>Новый GPX трек</FormLabel>
+                                <FormControl><Input type="file" accept=".gpx" onChange={e => onChange(e.target.files)} {...fieldProps} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="photos_archive"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Ссылка на фотоархив</FormLabel>
+                                <FormControl><Input type="url" {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </fieldset>
+              <div className="flex justify-between items-center">
+                <div className="flex gap-2">
+                    {isEditable && (
+                        <Button type="submit" disabled={mutation.isPending}>
+                            {mutation.isPending ? "Сохранение..." : "Сохранить изменения"}
+                        </Button>
                     )}
-                />
-                <FormField
-                    control={form.control}
-                    name="gpx_file"
-                    render={({ field: { value, onChange, ...fieldProps } }) => (
-                        <FormItem>
-                            <FormLabel>Новый GPX трек</FormLabel>
-                            <FormControl><Input type="file" accept=".gpx" onChange={e => onChange(e.target.files)} {...fieldProps} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="photos_archive"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Ссылка на фотоархив</FormLabel>
-                            <FormControl><Input type="url" {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-              <div className="flex gap-2">
-                <Button type="submit" disabled={mutation.isPending}>
-                  {mutation.isPending ? "Сохранение..." : "Сохранить изменения"}
-                </Button>
-                <Button type="button" variant="outline" onClick={() => router.push('/admin/hikes')}>
-                  Отмена
-                </Button>
+                    <Button type="button" variant="outline" onClick={() => router.push('/admin/hikes')}>
+                    Отмена
+                    </Button>
+                </div>
+                {renderStatusButtons()}
               </div>
             </form>
           </Form>

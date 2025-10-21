@@ -2,7 +2,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import api from '@/lib/api';
+import { getAllHikes } from '@/lib/api';
 import { Hike } from '@/types';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
@@ -10,11 +10,6 @@ import { formatDateRange } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-
-async function fetchHikes(): Promise<{ detail: Hike[] }> {
-  const { data } = await api.get('/archive/hikes');
-  return data;
-}
 
 function HikeCard({ hike }: { hike: Hike }) {
   return (
@@ -52,9 +47,8 @@ export default function HikesPage() {
   const [complexityFilter, setComplexityFilter] = useState('all');
 
   const { data: hikes, isLoading, error } = useQuery<Hike[]>({
-    queryKey: ['hikes'],
-    queryFn: fetchHikes,
-    select: (data) => data.detail,
+    queryKey: ['hikes', 'published'],
+    queryFn: async () => (await getAllHikes('published')).detail,
   });
 
   const uniqueRegions = useMemo(() => {

@@ -1,15 +1,10 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import api from '@/lib/api';
+import { getAllPasses } from '@/lib/api';
 import { Pass } from '@/types';
 import Link from 'next/link';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-
-async function fetchPasses(): Promise<Pass[]> {
-  const { data } = await api.get('/archive/passes');
-  return data;
-}
 
 function PassCard({ pass }: { pass: Pass }) {
   return (
@@ -32,9 +27,8 @@ function PassCard({ pass }: { pass: Pass }) {
 
 export default function PassesPage() {
   const { data: passes, isLoading, error } = useQuery<any>({ 
-    queryKey: ['passes'], 
-    queryFn: fetchPasses, 
-    select: (data) => data.detail, // Extract the array from the response object
+    queryKey: ['passes', 'published'], 
+    queryFn: async () => (await getAllPasses('published')).detail,
   });
 
   if (isLoading) return <div className="container mx-auto px-4 py-24 text-center">Загрузка перевалов...</div>;

@@ -12,12 +12,14 @@ import { useState, useRef, useLayoutEffect } from 'react';
 import { useModal } from '@/providers/ModalProvider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { X } from 'lucide-react';
+import { AlertCircle, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // --- Login Form --- //
 const loginSchema = z.object({
-  username: z.string().min(1, "Имя пользователя обязательно"),
+  username: z.string()
+    .min(1, "Имя пользователя обязательно")
+    .regex(/^[a-z0-9_]+$/, "Логин может содержать только строчные латинские буквы, цифры и нижнее подчеркивание"),
   password: z.string().min(1, "Пароль обязателен"),
 });
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -56,13 +58,23 @@ function LoginForm() {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="login-username">Имя пользователя</Label>
-        <Input id="login-username" {...register('username')} />
-        {errors.username && <p className="text-sm text-red-500">{errors.username.message}</p>}
+        <Input id="login-username" {...register('username')} placeholder="например, ivan_ivanov" />
+        {errors.username && (
+          <div className="flex items-center text-sm text-red-500 mt-1">
+            <AlertCircle className="h-4 w-4 mr-1 flex-shrink-0" />
+            <p>{errors.username.message}</p>
+          </div>
+        )}
       </div>
       <div className="space-y-2">
         <Label htmlFor="login-password">Пароль</Label>
-        <Input id="login-password" type="password" {...register('password')} />
-        {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
+        <Input id="login-password" type="password" {...register('password')} placeholder="••••••••" />
+        {errors.password && (
+          <div className="flex items-center text-sm text-red-500 mt-1">
+            <AlertCircle className="h-4 w-4 mr-1 flex-shrink-0" />
+            <p>{errors.password.message}</p>
+          </div>
+        )}
       </div>
       <Button type="submit" className="w-full" disabled={mutation.isPending}>
         {mutation.isPending ? 'Вход...' : 'Войти'}
@@ -73,11 +85,19 @@ function LoginForm() {
 
 // --- Register Form --- //
 const registerSchema = z.object({
-  username: z.string().min(3, "Минимум 3 символа"),
+  username: z.string()
+    .min(3, "Минимум 3 символа")
+    .regex(/^[a-z0-9_]+$/, "Логин может содержать только строчные латинские буквы, цифры и нижнее подчеркивание"),
   email: z.string().email("Некорректный email"),
-  password: z.string().min(6, "Минимум 6 символов"),
-  first_name: z.string().min(1, "Имя обязательно"),
-  last_name: z.string().min(1, "Фамилия обязательна"),
+  password: z.string()
+    .min(6, "Минимум 6 символов")
+    .regex(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/, "Пароль должен содержать как минимум одну букву и одну цифру"),
+  first_name: z.string()
+    .min(1, "Имя обязательно")
+    .regex(/^[a-zA-Zа-яА-Я]+$/, "Имя может содержать только буквы"),
+  last_name: z.string()
+    .min(1, "Фамилия обязательна")
+    .regex(/^[a-zA-Zа-яА-Я]+$/, "Фамилия может содержать только буквы"),
 });
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
@@ -121,29 +141,54 @@ function RegisterForm() {
        <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="last_name">Фамилия</Label>
-          <Input id="last_name" {...register('last_name')} />
-          {errors.last_name && <p className="text-sm text-red-500">{errors.last_name.message}</p>}
+          <Input id="last_name" {...register('last_name')} placeholder="Иванов" />
+          {errors.last_name && (
+            <div className="flex items-center text-sm text-red-500 mt-1">
+                <AlertCircle className="h-4 w-4 mr-1 flex-shrink-0" />
+                <p>{errors.last_name.message}</p>
+            </div>
+          )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="first_name">Имя</Label>
-          <Input id="first_name" {...register('first_name')} />
-          {errors.first_name && <p className="text-sm text-red-500">{errors.first_name.message}</p>}
+          <Input id="first_name" {...register('first_name')} placeholder="Иван" />
+          {errors.first_name && (
+            <div className="flex items-center text-sm text-red-500 mt-1">
+                <AlertCircle className="h-4 w-4 mr-1 flex-shrink-0" />
+                <p>{errors.first_name.message}</p>
+            </div>
+          )}
         </div>
       </div>
       <div className="space-y-2">
         <Label htmlFor="username">Имя пользователя</Label>
-        <Input id="username" {...register('username')} />
-        {errors.username && <p className="text-sm text-red-500">{errors.username.message}</p>}
+        <Input id="username" {...register('username')} placeholder="ivan_ivanov" />
+        {errors.username && (
+            <div className="flex items-center text-sm text-red-500 mt-1">
+                <AlertCircle className="h-4 w-4 mr-1 flex-shrink-0" />
+                <p>{errors.username.message}</p>
+            </div>
+        )}
       </div>
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
-        <Input id="email" type="email" {...register('email')} />
-        {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
+        <Input id="email" type="email" {...register('email')} placeholder="example@mail.com" />
+        {errors.email && (
+            <div className="flex items-center text-sm text-red-500 mt-1">
+                <AlertCircle className="h-4 w-4 mr-1 flex-shrink-0" />
+                <p>{errors.email.message}</p>
+            </div>
+        )}
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">Пароль</Label>
-        <Input id="password" type="password" {...register('password')} />
-        {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
+        <Input id="password" type="password" {...register('password')} placeholder="••••••••" />
+        {errors.password && (
+            <div className="flex items-center text-sm text-red-500 mt-1">
+                <AlertCircle className="h-4 w-4 mr-1 flex-shrink-0" />
+                <p>{errors.password.message}</p>
+            </div>
+        )}
       </div>
       <Button type="submit" className="w-full" disabled={mutation.isPending}>
         {mutation.isPending ? 'Регистрация...' : 'Создать аккаунт'}
@@ -156,14 +201,6 @@ function RegisterForm() {
 export function AuthModal() {
   const { isAuthModalOpen, hideAuthModal } = useModal();
   const [activeView, setActiveView] = useState('login');
-  const [contentHeight, setContentHeight] = useState<number | 'auto'>('auto');
-  const contentRef = useRef<HTMLDivElement>(null);
-
-  useLayoutEffect(() => {
-    if (contentRef.current) {
-      setContentHeight(contentRef.current.scrollHeight);
-    }
-  }, [activeView]);
 
   return (
     <Dialog open={isAuthModalOpen} onOpenChange={(open) => !open && hideAuthModal()}>
@@ -197,12 +234,10 @@ export function AuthModal() {
         </div>
 
         <div 
-          style={{ height: contentHeight, transition: 'height 0.3s ease-in-out' }} 
-          className="overflow-hidden"
+          className="px-6 pb-6 overflow-y-auto" 
+          style={{ maxHeight: 'calc(100vh - 250px)' }}
         >
-          <div ref={contentRef} className="px-6 pb-6">
             {activeView === 'login' ? <LoginForm /> : <RegisterForm />}
-          </div>
         </div>
 
         <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">

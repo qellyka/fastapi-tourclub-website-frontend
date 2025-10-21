@@ -21,12 +21,14 @@ import {
 import { DotsHorizontalIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
 
+import { withAdminAuth } from '@/components/admin/withAdminAuth';
+
 async function fetchParticipants(): Promise<any> {
   const { data } = await api.get('/club/participants');
   return data;
 }
 
-export default function AdminParticipantsPage() {
+function AdminParticipantsPage() {
   const queryClient = useQueryClient();
   const { data: participants, isLoading, error } = useQuery<User[]>({
     queryKey: ['admin-club-participants'],
@@ -104,3 +106,5 @@ export default function AdminParticipantsPage() {
     </div>
   );
 }
+
+export default withAdminAuth(AdminParticipantsPage);

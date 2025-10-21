@@ -18,7 +18,7 @@ import { useModal } from '@/providers/ModalProvider';
 
 // --- Data Fetching ---
 async function fetchRecentNews(): Promise<News[]> {
-  const { data } = await api.get('/news?limit=3');
+  const { data } = await api.get('/news?limit=3&status=published');
   return data.detail;
 }
 

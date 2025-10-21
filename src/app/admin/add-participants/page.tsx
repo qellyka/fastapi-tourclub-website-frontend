@@ -15,6 +15,8 @@ import { Hike, User } from '@/types';
 import { Trash2, PlusCircle } from 'lucide-react';
 import { UserSearchCombobox } from '@/components/UserSearchCombobox';
 
+import { withAdminAuth } from '@/components/admin/withAdminAuth';
+
 const participantSchema = z.object({
   participant_id: z.string().min(1, "Выберите участника"),
   role: z.string().min(1, "Укажите роль"),
@@ -37,7 +39,7 @@ async function fetchAllUsers(): Promise<any> {
   return data;
 }
 
-export default function AddParticipantsToHikePage() {
+function AddParticipantsToHikePage() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -190,3 +192,5 @@ export default function AddParticipantsToHikePage() {
     </div>
   );
 }
+
+export default withAdminAuth(AddParticipantsToHikePage);
