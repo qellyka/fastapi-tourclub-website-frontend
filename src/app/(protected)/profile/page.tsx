@@ -81,23 +81,23 @@ const profileFormSchema = z.object({
 
 
 
-  first_name: z.string().min(1, "Имя не может быть пустым").optional().or(z.literal("")),
+  first_name: z.string().min(1, "Имя не может быть пустым").transform(e => e === "" ? undefined : e).optional(),
 
 
 
-  last_name: z.string().min(1, "Фамилия не может быть пустой").optional().or(z.literal("")),
+  last_name: z.string().min(1, "Фамилия не может быть пустой").transform(e => e === "" ? undefined : e).optional(),
 
 
 
-  middle_name: z.string().optional().or(z.literal("")),
+  middle_name: z.string().transform(e => e === "" ? undefined : e).optional(),
 
 
 
-  phone_number: z.string().optional().or(z.literal("")),
+  phone_number: z.string().transform(e => e === "" ? undefined : e).optional(),
 
 
 
-  description: z.string().max(300, "Описание не должно превышать 300 символов").optional().or(z.literal("")),
+  description: z.string().max(300, "Описание не должно превышать 300 символов").transform(e => e === "" ? undefined : e).optional(),
 
 
 
@@ -261,15 +261,287 @@ function ProfileForm({ user, logout }: { user: User, logout: () => void }) {
 
 
 
-  const onSubmit = (data: ProfileFormValues) => {
+      const onSubmit = (data: ProfileFormValues) => {
 
 
 
-    updateProfileMutation.mutate(data);
 
 
 
-  };
+
+        const payload: Partial<ProfileFormValues> = {};
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+        const fields: Array<keyof ProfileFormValues> = [
+
+
+
+
+
+
+
+          "first_name",
+
+
+
+
+
+
+
+          "last_name",
+
+
+
+
+
+
+
+          "middle_name",
+
+
+
+
+
+
+
+          "phone_number",
+
+
+
+
+
+
+
+          "description",
+
+
+
+
+
+
+
+        ];
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+        fields.forEach((field) => {
+
+
+
+
+
+
+
+          const originalValue = user[field];
+
+
+
+
+
+
+
+          const newValue = data[field];
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+          // Case 1: Field was cleared (newValue is undefined, originalValue existed)
+
+
+
+
+
+
+
+          // Send null to explicitly clear the field on the backend.
+
+
+
+
+
+
+
+          if (newValue === undefined && originalValue !== undefined && originalValue !== null) {
+
+
+
+
+
+
+
+            payload[field] = null; // Explicitly send null to clear the field
+
+
+
+
+
+
+
+          }
+
+
+
+
+
+
+
+          // Case 2: Value has changed (and is not just being cleared from an existing value)
+
+
+
+
+
+
+
+          else if (newValue !== originalValue) {
+
+
+
+
+
+
+
+            payload[field] = newValue;
+
+
+
+
+
+
+
+          }
+
+
+
+
+
+
+
+        });
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+        if (Object.keys(payload).length > 0) {
+
+
+
+
+
+
+
+          updateProfileMutation.mutate(payload);
+
+
+
+
+
+
+
+        } else {
+
+
+
+
+
+
+
+          toast({
+
+
+
+
+
+
+
+            title: "Нет изменений",
+
+
+
+
+
+
+
+            description: "Данные профиля не были изменены.",
+
+
+
+
+
+
+
+          });
+
+
+
+
+
+
+
+          setIsEditing(false);
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+      };
 
 
 

@@ -17,12 +17,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Textarea } from '@/components/ui/textarea';
 
 const formSchema = z.object({
-  email: z.string().email({ message: "Неверный формат email" }).optional(),
-  first_name: z.string().optional(),
-  last_name: z.string().optional(),
-  middle_name: z.string().optional(),
-  description: z.string().optional(),
-  phone_number: z.string().optional(),
+  email: z.string().email({ message: "Неверный формат email" }).transform(e => e === "" ? undefined : e).optional(),
+  first_name: z.string().transform(e => e === "" ? undefined : e).optional(),
+  last_name: z.string().min(1, "Фамилия обязательна"),
+  middle_name: z.string().transform(e => e === "" ? undefined : e).optional(),
+  description: z.string().transform(e => e === "" ? undefined : e).optional(),
+  phone_number: z.string().transform(e => e === "" ? undefined : e).optional(),
   roles: z.array(z.string()).optional(),
 });
 
@@ -91,7 +91,51 @@ export default function AdminUserEditPage() {
   if (!user) return <div>Пользователь не найден</div>;
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
-    mutation.mutate(data);
+    const payload: Partial<UserAdminUpdate> = {};
+
+    const fields: Array<keyof UserAdminUpdate> = [
+      "email",
+      "first_name",
+      "last_name",
+      "middle_name",
+      "description",
+      "phone_number",
+      "roles",
+    ];
+
+    fields.forEach((field) => {
+      const originalValue = user[field];
+      const newValue = data[field];
+
+      // Special handling for roles array
+      if (field === 'roles') {
+        const originalRoles = new Set(originalValue as string[] || []);
+        const newRoles = new Set(newValue as string[] || []);
+
+        // Check if roles have actually changed
+        if (originalRoles.size !== newRoles.size || ![...originalRoles].every(role => newRoles.has(role))) {
+          payload[field] = newValue;
+        }
+      }
+      // Case 1: Field was cleared (newValue is undefined, originalValue existed)
+      // Send null to explicitly clear the field on the backend.
+      else if (newValue === undefined && originalValue !== undefined && originalValue !== null) {
+        payload[field] = null; // Explicitly send null to clear the field
+      }
+      // Case 2: Value has changed (and is not just being cleared from an existing value)
+      else if (newValue !== originalValue) {
+        payload[field] = newValue;
+      }
+    });
+
+    if (Object.keys(payload).length > 0) {
+      mutation.mutate(payload);
+    } else {
+      toast({
+        title: "Нет изменений",
+        description: "Данные пользователя не были изменены.",
+      });
+    }
   };
 
   return (

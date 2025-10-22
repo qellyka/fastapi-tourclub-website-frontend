@@ -98,6 +98,7 @@ const registerSchema = z.object({
   last_name: z.string()
     .min(1, "Фамилия обязательна")
     .regex(/^[a-zA-Zа-яА-Я]+$/, "Фамилия может содержать только буквы"),
+  middle_name: z.string().trim().default(""),
 });
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
@@ -124,7 +125,13 @@ function RegisterForm() {
   });
 
   const onSubmit = (data: RegisterFormValues) => {
-    mutation.mutate(data);
+    const trimmedData = Object.fromEntries(
+      Object.entries(data).map(([key, value]) => [
+        key,
+        typeof value === 'string' ? value.trim() : value,
+      ])
+    ) as RegisterFormValues;
+    mutation.mutate(trimmedData);
   };
 
   if (success) {
@@ -159,6 +166,16 @@ function RegisterForm() {
             </div>
           )}
         </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="middle_name">Отчество (необязательно)</Label>
+        <Input id="middle_name" {...register('middle_name')} placeholder="Иванович" />
+        {errors.middle_name && (
+            <div className="flex items-center text-sm text-red-500 mt-1">
+                <AlertCircle className="h-4 w-4 mr-1 flex-shrink-0" />
+                <p>{errors.middle_name.message}</p>
+            </div>
+        )}
       </div>
       <div className="space-y-2">
         <Label htmlFor="username">Имя пользователя</Label>

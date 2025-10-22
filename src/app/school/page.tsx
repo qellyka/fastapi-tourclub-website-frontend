@@ -66,7 +66,7 @@ function SchoolPageClient() {
     return <p className="text-destructive text-center py-24">Ошибка при загрузке данных: {error.message}</p>;
   }
 
-  const application = data?.detail;
+  const application = data?.detail && Object.keys(data.detail).length > 0 ? data.detail : null;
 
   return (
     <div className="bg-background pt-20"> {/* Added padding top for fixed header */}
@@ -93,8 +93,6 @@ function SchoolPageClient() {
         <section className="text-center">
           {isAuthenticated && application ? (
             <div>
-              <h2 className="text-3xl font-bold text-foreground mb-4">Ваша заявка уже в пути!</h2>
-              <p className="text-lg text-muted-foreground mb-8">Ниже вы можете отслеживать ее статус.</p>
               <ApplicationStatus application={application} />
             </div>
           ) : (
