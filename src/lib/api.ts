@@ -83,7 +83,8 @@ export const getAllSchoolApplications = async (status?: string): Promise<ApiResp
 };
 
 export const updateSchoolApplicationStatus = async (id: number, data: SchoolApplicationUpdateAdmin): Promise<ApiResponse<SchoolApplication>> => {
-  const response = await api.patch(`/admin/school/applications/${id}`, data);
+  const updatedData = { ...data, status: data.status };
+  const response = await api.patch(`/admin/school/applications/${id}`, updatedData);
   return response.data;
 };
 
@@ -229,6 +230,55 @@ export const updateHike = async (id: number, data: HikeUpdatePayload, gpxFile?: 
       'Content-Type': 'multipart/form-data',
     },
   });
+  return response.data;
+};
+
+// --- FAQ API ---
+
+export const getAdminFaqs = async (is_active?: boolean, lang?: string): Promise<ApiResponse<FAQItem[]>> => {
+  const params: { [key: string]: any } = {};
+  if (is_active !== undefined) params.is_active = is_active;
+  if (lang) params.lang = lang;
+  const response = await api.get('/admin/faqs', { params });
+  return response.data;
+};
+
+export const getPublicFaqs = async (lang?: string): Promise<ApiResponse<FAQItem[]>> => {
+  const params: { [key: string]: any } = {};
+  if (lang) params.lang = lang;
+  const response = await api.get('/faqs', { params });
+  return response.data;
+};
+
+export const getFaqById = async (id: number): Promise<ApiResponse<FAQItem>> => {
+  const response = await api.get(`/admin/faqs/${id}`);
+  return response.data;
+};
+
+export const createFaq = async (data: FAQCreateUpdate): Promise<ApiResponse<FAQItem>> => {
+  const response = await api.post('/admin/faqs', data);
+  return response.data;
+};
+
+export const updateFaq = async (id: number, data: FAQCreateUpdate): Promise<ApiResponse<FAQItem>> => {
+  const response = await api.put(`/admin/faqs/${id}`, data);
+  return response.data;
+};
+
+export const patchFaq = async (id: number, data: Partial<FAQCreateUpdate>): Promise<ApiResponse<FAQItem>> => {
+  const response = await api.patch(`/admin/faqs/${id}`, data);
+  return response.data;
+};
+
+export const deleteFaq = async (id: number): Promise<ApiResponse<string>> => {
+  const response = await api.delete(`/admin/faqs/${id}`);
+  return response.data;
+};
+
+// --- Statistics API ---
+
+export const getStatistics = async (): Promise<ApiResponse<StatisticsData>> => {
+  const response = await api.get('/statistics');
   return response.data;
 };
 

@@ -217,6 +217,48 @@ export interface SchoolApplicationUpdateAdmin {
   comment?: string;
 }
 
+export interface FAQItem {
+  id: number;
+  question_ru: string;
+  answer_ru: string;
+  question_en?: string;
+  answer_en?: string;
+  order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FAQCreateUpdate {
+  question_ru: string;
+  answer_ru: string;
+  question_en?: string;
+  answer_en?: string;
+  order?: number;
+  is_active?: boolean;
+}
+
+export interface StatisticsData {
+  total_users: number;
+  new_users_last_30_days: number;
+  total_hikes: number;
+  hikes_by_status: {
+    PUBLISHED: number;
+    DRAFT: number;
+    REVIEW: number;
+    ARCHIVED: number;
+  };
+  total_applications: number;
+  applications_by_status: {
+    pending: number;
+    approved: number;
+    rejected: number;
+  };
+  total_articles: number;
+  total_news: number;
+  total_passes: number;
+}
+
 // Generic API response wrapper
 export interface ApiResponse<T> {
   status: 'success' | 'error';
