@@ -27,7 +27,7 @@ const formSchema = z.object({
   experience: z.enum(['none', 'weekend_hikes', 'mountain_hikes', 'advanced'], { required_error: "Выберите ваш опыт." }),
   previous_school: z.enum(['yes', 'no'], { required_error: "Укажите, были ли вы в школе ранее." }),
   how_heard: z.enum(['friends', 'social_media', 'university', 'other'], { required_error: "Выберите источник." }),
-  question: z.string().min(10, "Пожалуйста, расскажите подробнее."),
+  question: z.string().optional(),
   wishes: z.string().optional(),
   consent: z.literal(true, { errorMap: () => ({ message: "Вы должны дать согласие на обработку персональных данных." }) })
 });
@@ -81,17 +81,27 @@ export default function ApplicationForm({ onSuccess }: Props) {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <FormField name="last_name" render={({ field }) => <FormItem><FormLabel>Фамилия</FormLabel><FormControl><Input placeholder="Иванов" {...field} /></FormControl><FormMessage /></FormItem>} />
-              <FormField name="first_name" render={({ field }) => <FormItem><FormLabel>Имя</FormLabel><FormControl><Input placeholder="Иван" {...field} /></FormControl><FormMessage /></FormItem>} />
+              <FormField name="last_name" render={({ field }) => <FormItem>                <FormLabel>
+                  Фамилия <span className="text-red-500">*</span>
+                </FormLabel><FormControl><Input placeholder="Иванов" {...field} /></FormControl><FormMessage /></FormItem>} />
+              <FormField name="first_name" render={({ field }) => <FormItem>                <FormLabel>
+                  Имя <span className="text-red-500">*</span>
+                </FormLabel><FormControl><Input placeholder="Иван" {...field} /></FormControl><FormMessage /></FormItem>} />
               <FormField name="middle_name" render={({ field }) => <FormItem><FormLabel>Отчество</FormLabel><FormControl><Input placeholder="Иванович" {...field} /></FormControl><FormMessage /></FormItem>} />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField name="date_of_birth" render={({ field }) => <FormItem><FormLabel>Дата рождения</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>} />
-                <FormField name="phone_number" render={({ field }) => <FormItem><FormLabel>Номер телефона</FormLabel><FormControl><Input placeholder="+7..." {...field} /></FormControl><FormMessage /></FormItem>} />
+                <FormField name="date_of_birth" render={({ field }) => <FormItem>                <FormLabel>
+                  Дата рождения <span className="text-red-500">*</span>
+                </FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>} />
+                <FormField name="phone_number" render={({ field }) => <FormItem>                <FormLabel>
+                  Телефон <span className="text-red-500">*</span>
+                </FormLabel><FormControl><Input placeholder="+7..." {...field} /></FormControl><FormMessage /></FormItem>} />
             </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField name="email" render={({ field }) => <FormItem><FormLabel>Email</FormLabel><FormControl><Input placeholder="email@example.com" {...field} /></FormControl><FormMessage /></FormItem>} />
+                <FormField name="email" render={({ field }) => <FormItem>                <FormLabel>
+                  Email <span className="text-red-500">*</span>
+                </FormLabel><FormControl><Input placeholder="email@example.com" {...field} /></FormControl><FormMessage /></FormItem>} />
                 <FormField name="vk_profile" render={({ field }) => <FormItem><FormLabel>Профиль ВКонтакте</FormLabel><FormControl><Input placeholder="https://vk.com/durov" {...field} /></FormControl><FormMessage /></FormItem>} />
             </div>
 
@@ -100,7 +110,9 @@ export default function ApplicationForm({ onSuccess }: Props) {
               name="experience"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ваш туристический опыт?</FormLabel>
+                  <FormLabel>
+                    Ваш туристический опыт? <span className="text-red-500">*</span>
+                  </FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Выберите уровень..." /></SelectTrigger></FormControl>
                     <SelectContent>
@@ -120,7 +132,9 @@ export default function ApplicationForm({ onSuccess }: Props) {
               name="previous_school"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Вы уже были в нашей школе в прошлые года?</FormLabel>
+                  <FormLabel>
+                    Вы уже были в нашей школе в прошлые года? <span className="text-red-500">*</span>
+                  </FormLabel>
                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Выберите..." /></SelectTrigger></FormControl>
                     <SelectContent>
@@ -138,7 +152,9 @@ export default function ApplicationForm({ onSuccess }: Props) {
               name="how_heard"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Откуда вы о нас узнали?</FormLabel>
+                  <FormLabel>
+                    Откуда вы о нас узнали? <span className="text-red-500">*</span>
+                  </FormLabel>
                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Выберите источник..." /></SelectTrigger></FormControl>
                     <SelectContent>
@@ -160,12 +176,14 @@ export default function ApplicationForm({ onSuccess }: Props) {
                 control={form.control}
                 name="consent"
                 render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-red-800 bg-red-950 p-4">
                         <FormControl>
                             <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                         </FormControl>
                         <div className="space-y-1 leading-none">
-                            <FormLabel>Я даю согласие на обработку персональных данных</FormLabel>
+                            <FormLabel className="text-red-200">
+                                Я даю согласие на сбор и обработку своих персональных данных (в соответствии с требованиями статьи 9 Федерального закона от 27.07.2006 № 152-ФЗ «О персональных данных»)
+                            </FormLabel>
                             <FormDescription>
                                 Нажимая “Отправить”, вы соглашаетесь с нашей политикой конфиденциальности.
                             </FormDescription>
