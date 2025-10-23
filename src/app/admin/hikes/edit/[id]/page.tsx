@@ -87,8 +87,8 @@ export default function EditHikePage() {
         end_date: '',
         description: '',
         participants_count: 1,
-        duration_days: undefined,
-        distance_km: undefined,
+        duration_days: '',
+        distance_km: '',
         difficulty_distribution: [],
         leader_id: '',
         photos_archive: '',
@@ -137,7 +137,13 @@ export default function EditHikePage() {
   });
 
   const statusUpdateMutation = useMutation({
-    mutationFn: (status: ContentStatus) => api.patch(`/archive/hikes/${hikeId}`, { update_data: JSON.stringify({ status }) }),
+    mutationFn: (status: ContentStatus) => {
+      const formData = new FormData();
+      formData.append('update_data', JSON.stringify({ status: status.toUpperCase() }));
+      return api.patch(`/archive/hikes/${hikeId}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+    },
     onSuccess: (data) => {
       queryClient.setQueryData(['hike', hikeId], data);
       queryClient.invalidateQueries({ queryKey: ['admin-hikes'] });
@@ -194,7 +200,10 @@ export default function EditHikePage() {
   const userRole = user?.roles.includes('admin') ? 'admin' : user?.roles.includes('moderator') ? 'moderator' : 'user';
 
   const isEditable = useMemo(() => {
-const status = hikeData.status?.toLowerCase() as ContentStatus;
+    if (!hikeData) {
+      return false;
+    }
+    const status = hikeData.status?.toLowerCase() as ContentStatus;
     const isAdmin = user.roles.includes('admin');
     const isModerator = user.roles.includes('moderator');
 

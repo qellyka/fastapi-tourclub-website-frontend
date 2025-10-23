@@ -52,7 +52,7 @@ export default function HikeParticipants({ hikeId }: { hikeId: number }) {
                 <AvatarFallback>{participant.full_name ? participant.full_name[0] : ''}</AvatarFallback>
               </Avatar>
               <div>
-                <p className="font-semibold text-sm">{participant.full_name}</p>
+                <p className="font-semibold text-sm whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]">{participant.full_name}</p>
                 <p className="text-xs text-muted-foreground">@{participant.username}</p>
                 {participant.role && <p className="text-xs font-medium text-primary capitalize">{participant.role}</p>}
               </div>

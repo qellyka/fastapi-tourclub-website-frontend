@@ -60,7 +60,7 @@ export default function ApplicationDetailClientPage({ id }: Props) {
             <CardHeader>
                 <div className="flex justify-between items-start">
                     <div>
-                        <CardTitle className="text-2xl">Заявка от {data.last_name} {data.first_name}</CardTitle>
+                        <CardTitle className="text-2xl whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">Заявка от {data.last_name} {data.first_name}</CardTitle>
                         <CardDescription>Подана: {new Date(data.created_at).toLocaleString('ru-RU')}</CardDescription>
                     </div>
                     <Badge variant={variant} className="text-base">{text}</Badge>
@@ -68,7 +68,7 @@ export default function ApplicationDetailClientPage({ id }: Props) {
             </CardHeader>
             <CardContent>
                 <dl>
-                    <DetailRow label="ФИО" value={`${data.last_name} ${data.first_name} ${data.middle_name || ''}`} />
+                    <DetailRow label="ФИО" value={<span className="whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">{`${data.last_name} ${data.first_name} ${data.middle_name || ''}`}</span>} />
                     <DetailRow label="Дата рождения" value={new Date(data.date_of_birth).toLocaleDateString('ru-RU')} />
                     <DetailRow label="Email" value={<a href={`mailto:${data.email}`} className="text-primary hover:underline">{data.email}</a>} />
                     <DetailRow label="Телефон" value={<a href={`tel:${data.phone_number}`} className="text-primary hover:underline">{data.phone_number}</a>} />

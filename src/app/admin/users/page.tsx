@@ -115,7 +115,7 @@ function AdminUsersPage() {
             {users?.map((user) => (
               <TableRow key={user.id} className="hover:bg-secondary">
                 <TableCell>{user.id}</TableCell>
-                <TableCell className="font-medium">{user.full_name}</TableCell>
+                <TableCell className="font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">{user.full_name}</TableCell>
                 <TableCell className="text-muted-foreground">{user.username}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell className="space-x-2">
