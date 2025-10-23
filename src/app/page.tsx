@@ -73,7 +73,7 @@ export default function Home() {
   return (
     <div className="mt-[-80px]"> {/* Offset for fixed header */} 
       {/* Hero Section */}
-      <section className="h-[80vh] md:h-screen w-full bg-[url('/root1.jpg')] bg-cover bg-center flex flex-col justify-center items-center text-center relative">
+      <section className="h-[80vh] md:h-screen w-full bg-[url('/root1.webp')] bg-cover bg-center flex flex-col justify-center items-center text-center relative">
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
         <div className="relative z-10 p-4 flex flex-col items-center mt-16">
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tighter mb-4 text-foreground">

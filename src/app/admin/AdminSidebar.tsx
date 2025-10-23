@@ -80,9 +80,10 @@ export function AdminSidebar({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen
                   </Link>
                 </li>
               );
-            })}
-          </ul>
-        </nav>
-      </aside>
-    </>
-  );
+                        })}
+                      </ul>
+                    </nav>
+                  </aside>
+                </>
+              );
+            }
