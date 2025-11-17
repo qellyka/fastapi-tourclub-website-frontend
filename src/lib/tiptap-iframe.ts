@@ -23,7 +23,7 @@ export const Iframe = Node.create<IframeOptions>({
     return {
       allowFullscreen: true,
       HTMLAttributes: {
-        class: 'w-full aspect-video',
+        class: 'w-full aspect-video rounded-lg',
       },
     };
   },
