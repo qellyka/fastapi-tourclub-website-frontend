@@ -32,12 +32,12 @@ export const ActivityDetailModal = ({ activity, isOpen, onClose }: ActivityDetai
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl w-full p-0">
         <div className="flex flex-col md:flex-row">
-          <div className="relative h-64 md:h-auto md:w-1/3">
+          <div className="relative h-64 md:h-auto md:w-1/2">
             <Image
               src={imageUrl}
               alt={activity.title}
               fill
-              className="object-contain rounded-t-lg md:rounded-l-lg md:rounded-t-none"
+              className="object-cover rounded-t-lg md:rounded-l-lg md:rounded-t-none"
             />
           </div>
           <div className="flex-1 p-8">
