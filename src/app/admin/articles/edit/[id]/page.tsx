@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { getArticleById, updateArticle } from '@/lib/api';
 import ArticleForm from '../../ArticleForm';
 import { toast } from '@/hooks/use-toast';
-import { Article, ContentStatus, UserRole } from '@/types';
+import { ApiResponse, Article, ContentStatus, UserRole } from '@/types';
 import { useAuth } from '@/providers/AuthProvider';
 import { useMemo } from 'react';
 
@@ -25,11 +25,12 @@ export default function EditArticlePage() {
 
   const mutation = useMutation({
     mutationFn: (updatedArticle: any) => updateArticle(id as string, updatedArticle),
-    onSuccess: () => {
+    onSuccess: (data: ApiResponse<Article>) => {
       queryClient.invalidateQueries({ queryKey: ['articles'] });
       queryClient.invalidateQueries({ queryKey: ['article', id] });
+      queryClient.invalidateQueries({ queryKey: ['article', data.detail.slug] });
       toast({ title: "Статья успешно обновлена" });
-      router.push('/admin/articles');
+      // router.push('/admin/articles');
     },
     onError: (error) => {
       toast({ title: "Ошибка при обновлении статьи", description: error.message, variant: "destructive" });

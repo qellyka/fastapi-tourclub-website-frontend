@@ -84,6 +84,24 @@ export default function AboutPage() {
             </div>
         </section>
 
+        <section className="mb-24">
+            <div className="max-w-5xl mx-auto">
+                <h2 className="text-4xl font-bold text-center text-foreground mb-8">Погрузитесь в атмосферу клуба</h2>
+                <div className="relative aspect-video rounded-xl overflow-hidden shadow-lg border border-border/50">
+                    <video 
+                        className="w-full h-full object-cover" 
+                        src="https://system-media.tkirbis30.ru/about_irbis.mp4" 
+                        controls 
+                        loop 
+                        muted 
+                        playsInline
+                    >
+                        Ваш браузер не поддерживает видео тег.
+                    </video>
+                </div>
+            </div>
+        </section>
+
         <section>
           <h2 className="text-4xl font-bold text-center text-foreground mb-12">
             Наши участники

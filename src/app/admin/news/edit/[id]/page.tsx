@@ -29,7 +29,7 @@ export default function EditNewsPage() {
       queryClient.invalidateQueries({ queryKey: ['news'] });
       queryClient.invalidateQueries({ queryKey: ['news-item', id] });
       toast({ title: "Новость успешно обновлена" });
-      router.push('/admin/news');
+      // router.push('/admin/news');
     },
     onError: (error) => {
       toast({ title: "Ошибка при обновлении новости", description: error.message, variant: "destructive" });

@@ -21,6 +21,7 @@ export default function NewsDetailPage({ params }: { params: { slug: string } })
   const { data: newsItem, isLoading, error } = useQuery<News>({
     queryKey: ['news', slug],
     queryFn: async () => (await fetchNewsBySlug(slug)).detail,
+    refetchInterval: 15000, // Refetch every 15 seconds
   });
 
   if (isLoading) return (

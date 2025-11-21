@@ -21,6 +21,7 @@ export default function ArticleDetailPage({ params }: { params: { slug: string }
     queryKey: ['article', slug],
     queryFn: () => fetchArticleBySlug(slug),
     select: (data) => data.detail,
+    refetchInterval: 15000, // Refetch every 15 seconds
   });
 
   if (isLoading) return (

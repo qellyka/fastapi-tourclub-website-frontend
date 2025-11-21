@@ -1,11 +1,55 @@
 'use client';
 
-import { Map, Source, Layer, NavigationControl, MapRef } from 'react-map-gl';
+import { Map, Source, Layer, NavigationControl, MapRef, useControl, IControl } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useRef, useState, useEffect } from 'react';
-import type { LngLatBoundsLike } from 'mapbox-gl';
+import type { Map as MapboxMapType, LngLatBoundsLike } from 'mapbox-gl';
+import { createRoot } from 'react-dom/client';
+import LayerSwitcher from './LayerSwitcher';
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+
+// Props for the LayerSwitcher component
+interface LayerSwitcherProps {
+  currentStyle: string;
+  onStyleChange: (style: string) => void;
+}
+
+// Wrapper class to use LayerSwitcher as a map control
+class LayerSwitcherControl implements IControl {
+  private _map: MapboxMapType | null = null;
+  private _container: HTMLDivElement;
+  private _root: ReturnType<typeof createRoot> | null = null;
+  private _props: LayerSwitcherProps;
+
+  constructor(props: LayerSwitcherProps) {
+    this._props = props;
+    this._container = document.createElement('div');
+    this._container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group';
+  }
+
+  onAdd(map: MapboxMapType) {
+    this._map = map;
+    this._root = createRoot(this._container);
+    this._root.render(<LayerSwitcher {...this._props} />);
+    return this._container;
+  }
+
+  onRemove() {
+    this._root?.unmount();
+    this._container.remove();
+    this._map = null;
+  }
+}
+
+// Custom hook component to use the control
+function LayerSwitcherControlWrapper(props: LayerSwitcherProps) {
+  useControl(() => new LayerSwitcherControl(props), {
+    position: 'top-right'
+  });
+  return null;
+}
+
 
 interface MapboxMapProps {
   geojson: any; // Allow any valid GeoJSON object
@@ -115,6 +159,7 @@ function getBounds(geojson: any): LngLatBoundsLike | null {
 export default function MapboxMap({ geojson }: MapboxMapProps) {
   const mapRef = useRef<MapRef>(null);
   const [isMapLoaded, setMapLoaded] = useState(false);
+  const [currentStyle, setCurrentStyle] = useState('mapbox://styles/mapbox/outdoors-v12');
 
   const onMapLoad = () => {
     if (mapRef.current) {
@@ -150,7 +195,7 @@ export default function MapboxMap({ geojson }: MapboxMapProps) {
         zoom: 5
       }}
       style={{ width: '100%', height: '100%' }}
-      mapStyle="mapbox://styles/mapbox/outdoors-v12"
+      mapStyle={currentStyle}
       mapboxAccessToken={MAPBOX_TOKEN}
       onLoad={onMapLoad}
       terrain={{ source: 'mapbox-dem', exaggeration: 1.5 }}
@@ -167,7 +212,11 @@ export default function MapboxMap({ geojson }: MapboxMapProps) {
         <Layer {...pointLayer} />
         <Layer {...pointLabelLayer} />
       </Source>
-      <NavigationControl position="top-left" />
+      <NavigationControl position="top-right" />
+      <LayerSwitcherControlWrapper
+        currentStyle={currentStyle}
+        onStyleChange={setCurrentStyle}
+      />
     </Map>
   );
 }
