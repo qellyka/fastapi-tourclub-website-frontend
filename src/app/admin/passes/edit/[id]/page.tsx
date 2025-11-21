@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useEffect, use, useMemo } from 'react';
 import { ContentStatus, Pass, UserRole } from '@/types';
 import { useAuth } from '@/providers/AuthProvider';
+import { PhotoUploader } from '@/components/PhotoUploader';
 
 const passSchema = z.object({
   name: z.string().min(1, "Название обязательно"),
@@ -23,7 +24,7 @@ const passSchema = z.object({
   description: z.string().min(1, "Описание обязательно"),
   latitude: z.preprocess((val) => Number(String(val).replace(',', '.')), z.number().min(-90, "Широта не может быть меньше -90").max(90, "Широта не может быть больше 90")),
   longitude: z.preprocess((val) => Number(String(val).replace(',', '.')), z.number().min(-180, "Долгота не может быть меньше -180").max(180, "Долгота не может быть больше 180")),
-  photos: z.string().optional(),
+  photos: z.array(z.string()).optional(),
 });
 
 type PassFormValues = z.infer<typeof passSchema>;
@@ -45,15 +46,18 @@ export default function EditPassPage({ params }: { params: { id: string } }) {
     queryFn: () => fetchPassById(id),
   });
 
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<PassFormValues>({
+  const { control, register, handleSubmit, formState: { errors }, reset } = useForm<PassFormValues>({
     resolver: zodResolver(passSchema),
+    defaultValues: {
+      photos: [],
+    }
   });
 
   useEffect(() => {
     if (passData) {
       reset({
         ...passData,
-        photos: passData.photos ? passData.photos.join('\n') : '',
+        photos: passData.photos || [],
       });
     }
   }, [passData, reset]);
@@ -88,7 +92,7 @@ export default function EditPassPage({ params }: { params: { id: string } }) {
   const statusUpdateMutation = useMutation({
     mutationFn: (status: ContentStatus) => api.patch(`/archive/passes/${id}`, { status }),
     onSuccess: (data) => {
-      queryClient.setQueryData(['pass', id], data);
+      queryClient.setQueryData(['pass', id], data.data.detail);
       queryClient.invalidateQueries({ queryKey: ['admin-passes'] });
       toast({ title: "Статус перевала успешно обновлен" });
     },
@@ -98,15 +102,7 @@ export default function EditPassPage({ params }: { params: { id: string } }) {
   });
 
   const onSubmit = (data: PassFormValues) => {
-    const { photos, ...rest } = data;
-    const photosArray = photos ? photos.split('\n').filter(url => url.trim() !== '') : [];
-    
-    const submissionData = {
-      ...rest,
-      photos: photosArray,
-    };
-
-    mutation.mutate(submissionData);
+    mutation.mutate(data);
   };
 
   const handleStatusChange = (status: ContentStatus) => {
@@ -241,8 +237,18 @@ export default function EditPassPage({ params }: { params: { id: string } }) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="photos">Фотографии (URL-адреса, каждый с новой строки)</Label>
-              <Textarea id="photos" {...register('photos')} />
+              <Label>Фотографии</Label>
+              <Controller
+                control={control}
+                name="photos"
+                render={({ field }) => (
+                  <PhotoUploader
+                    value={field.value || []}
+                    onChange={field.onChange}
+                    isEditable={isEditable}
+                  />
+                )}
+              />
               {errors.photos && <p className="text-sm text-red-500">{errors.photos.message}</p>}
             </div>
         </fieldset>

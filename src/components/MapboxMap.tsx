@@ -36,7 +36,10 @@ class LayerSwitcherControl implements IControl {
   }
 
   onRemove() {
-    this._root?.unmount();
+    // Defer unmounting to avoid race conditions with React's render cycle
+    setTimeout(() => {
+      this._root?.unmount();
+    }, 0);
     this._container.remove();
     this._map = null;
   }

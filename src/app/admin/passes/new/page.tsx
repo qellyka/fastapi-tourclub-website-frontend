@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { PhotoUploader } from '@/components/PhotoUploader';
 
 const passSchema = z.object({
   name: z.string().min(1, "Название обязательно"),
@@ -21,7 +21,7 @@ const passSchema = z.object({
   description: z.string().min(1, "Описание обязательно"),
   latitude: z.preprocess((val) => Number(String(val).replace(',', '.')), z.number().min(-90, "Широта не может быть меньше -90").max(90, "Широта не может быть больше 90")),
   longitude: z.preprocess((val) => Number(String(val).replace(',', '.')), z.number().min(-180, "Долгота не может быть меньше -180").max(180, "Долгота не может быть больше 180")),
-  photos: z.string().optional(),
+  photos: z.array(z.string()).optional(),
 });
 
 type PassFormValues = z.infer<typeof passSchema>;
@@ -31,8 +31,11 @@ export default function NewPassPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { register, handleSubmit, formState: { errors } } = useForm<PassFormValues>({
+  const { control, register, handleSubmit, formState: { errors } } = useForm<PassFormValues>({
     resolver: zodResolver(passSchema),
+    defaultValues: {
+      photos: [],
+    }
   });
 
   const mutation = useMutation({
@@ -62,15 +65,7 @@ export default function NewPassPage() {
   });
 
   const onSubmit = (data: PassFormValues) => {
-    const { photos, ...rest } = data;
-    const photosArray = photos ? photos.split('\n').filter(url => url.trim() !== '') : [];
-    
-    const submissionData = {
-      ...rest,
-      photos: photosArray,
-    };
-
-    mutation.mutate(submissionData);
+    mutation.mutate(data);
   };
 
   return (
@@ -121,9 +116,18 @@ export default function NewPassPage() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="photos">Фотографии (URL-адреса, каждый с новой строки)</Label>
-          <Textarea id="photos" {...register('photos')} />
-          {errors.photos && <p className="text-sm text-red-500">{errors.photos.message}</p>}
+            <Label>Фотографии</Label>
+            <Controller
+            control={control}
+            name="photos"
+            render={({ field }) => (
+                <PhotoUploader
+                value={field.value || []}
+                onChange={field.onChange}
+                />
+            )}
+            />
+            {errors.photos && <p className="text-sm text-red-500">{errors.photos.message}</p>}
         </div>
 
         <Button type="submit" disabled={mutation.isPending}>

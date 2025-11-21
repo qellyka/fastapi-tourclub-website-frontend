@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { AxiosRequestConfig } from 'axios';
+import type { AxiosError, AxiosRequestConfig } from 'axios';
 import {
   ApiResponse,
   Article,
@@ -29,36 +29,62 @@ declare module 'axios' {
   }
 }
 
+let isRefreshing = false;
+let failedQueue: { resolve: (value: any) => void; reject: (reason?: any) => void; originalRequest: AxiosRequestConfig }[] = [];
 
+const processQueue = (error: AxiosError | null, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
 
 api.interceptors.response.use(
   (response) => response,
-  async (error) => {
+  async (error: AxiosError) => {
     const originalRequest = error.config as AxiosRequestConfig;
 
     // Условия для попытки обновления токена:
     // 1. Ошибка 401 (Unauthorized).
     // 2. Это не повторная попытка (чтобы избежать бесконечных циклов от других ошибок).
-    // 3. Запрос, который провалился, - это НЕ сам запрос на обновление токена.
+    // 3. Запрос, который провалился, - это НЕ сам запрос на обновление токена или выход из системы.
     if (error.response?.status === 401 && !originalRequest._retry && originalRequest.url !== '/auth/refresh' && originalRequest.url !== '/auth/logout') {
-      originalRequest._retry = true;
-
-      try {
-        console.log('Access token expired or missing. Attempting to refresh...');
-        await api.get('/auth/refresh', { withCredentials: true });
-        console.log('Token refreshed successfully.');
-
-        // Повторяем оригинальный запрос с новым токеном
-        return api(originalRequest);
-
-      } catch (refreshError: any) {
-        console.error('Unable to refresh token. Logging out.', refreshError.response?.data);
-        
-        // Если обновить токен не удалось, вызываем logout на бэкенде
-        api.post('/auth/logout').catch(err => console.error('Logout call after refresh failure also failed:', err));
-        
-        return Promise.reject(refreshError);
+      
+      // Если запрос на обновление уже идет, ставим текущий запрос в очередь
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject, originalRequest });
+        })
+        .then(() => api(originalRequest)) // Повторяем запрос после успешного обновления
+        .catch(err => Promise.reject(err)); // Если обновление провалилось, отклоняем текущий запрос
       }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      return new Promise((resolve, reject) => {
+        api.get('/auth/refresh', { withCredentials: true })
+          .then(res => {
+            console.log('Token refreshed successfully.');
+            isRefreshing = false;
+            // Повторяем все запросы из очереди
+            processQueue(null, res.data); // Assuming res.data contains the new token or relevant info
+            resolve(api(originalRequest));
+          })
+          .catch((refreshError: AxiosError) => {
+            console.error('Unable to refresh token. Logging out.', refreshError.response?.data);
+            isRefreshing = false;
+            // Если обновить токен не удалось, вызываем logout на бэкенде
+            api.post('/auth/logout').catch(err => console.error('Logout call after refresh failure also failed:', err));
+            // Отклоняем все запросы в очереди
+            processQueue(refreshError);
+            reject(refreshError);
+          });
+      });
     }
 
     return Promise.reject(error);

@@ -31,6 +31,12 @@ const nextConfig = {
             },
             {
                 protocol: 'https',
+                hostname: 'pass-media.tkirbis30.ru',
+                port: '',
+                pathname: '/**',
+            },
+            {
+                protocol: 'https',
                 hostname: 'fst-dmitrov.ru',
                 port: '',
                 pathname: '/**',
